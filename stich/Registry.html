@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Docker Manager - Registries</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b5cf6", "primary-hover": "#7c3aed",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121212", "surface-dark": "#1e1e1e", "surface-border": "#333333", "text-secondary": "#a1a1aa",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .status-pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-surface-border px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+        <div class="flex items-center gap-4 dark:text-white text-slate-900">
+            <div class="size-8 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">deployed_code</span>
+            </div>
+            <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Docker Manager</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <nav class="hidden md:flex items-center gap-9">
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors"
+                    href="#">Dashboard</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors"
+                    href="#">Containers</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Images</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Volumes</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Networks</a>
+                <a class="text-sm font-medium leading-normal text-primary" href="#">Registries</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Settings</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <div class="bg-center bg-no-repeat bg-cover rounded-full size-9 ring-2 ring-surface-border cursor-pointer"
+                    data-alt="User profile avatar"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBUNbar0KRi2wwoj-G12zeDmUygKG1JDIZQEvok0pXeY7ATbGAa8vMRrf9BFWC8sCXKeQgGWTT6LAh7-YSso1o_t41sh55QYRMMVD68lsOwuPJ10FPZeBXDLOCnfaYGrxCffQHFzPlBuPVN0JUsC350XAFwm3qUGQqM6cCtr6vxJ2dZTYVQWWYwLujGf3wQCEDWHBj4E5UgJmyXR55UBodZT8Y2mZ9pkPbMsuV0WHoNYaL0fT7v_HWV9IJVEAbTQL_EPLDnRpE96vg");'>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full">
+        <div class="flex flex-col gap-6 mb-8">
+            <div class="flex flex-wrap gap-2 items-center text-sm">
+                <a class="text-text-secondary hover:text-white transition-colors" href="#">Home</a>
+                <span class="text-text-secondary">/</span>
+                <span class="text-white font-medium">Registries</span>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">Registry
+                        Management</h1>
+                    <p class="text-slate-500 dark:text-text-secondary">Connect to private Docker registries and manage
+                        authentication.</p>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+            <div class="xl:col-span-1">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">add_link</span>
+                        Connect New Registry
+                    </h3>
+                    <form class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                                for="registry-url">Registry URL</label>
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+                                    <span class="material-symbols-outlined text-[18px]">dns</span>
+                                </div>
+                                <input
+                                    class="block w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-surface-border rounded-lg leading-5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all font-mono"
+                                    id="registry-url" placeholder="https://index.docker.io/v1/" type="text" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                                for="username">Username</label>
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+                                    <span class="material-symbols-outlined text-[18px]">person</span>
+                                </div>
+                                <input
+                                    class="block w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-surface-border rounded-lg leading-5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all"
+                                    id="username" placeholder="docker_user" type="text" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                                for="password">Password / Token</label>
+                            <div class="relative">
+                                <div
+                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+                                    <span class="material-symbols-outlined text-[18px]">key</span>
+                                </div>
+                                <input
+                                    class="block w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-[#121212] border border-slate-200 dark:border-surface-border rounded-lg leading-5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all font-mono"
+                                    id="password" placeholder="••••••••••••••••" type="password" />
+                            </div>
+                        </div>
+                        <button
+                            class="flex items-center justify-center gap-2 w-full mt-2 h-10 px-4 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-violet-900/20">
+                            <span class="material-symbols-outlined text-[20px]">login</span>
+                            Login
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="xl:col-span-2">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
+                    <div
+                        class="p-6 pb-4 border-b border-slate-200 dark:border-surface-border flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">cloud_done</span>
+                            Active Sessions
+                        </h3>
+                        <div class="flex items-center gap-2 text-sm text-text-secondary">
+                            <span class="flex h-2 w-2 rounded-full bg-green-500 status-pulse-green"></span>
+                            3 Connected
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr
+                                    class="border-b border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#181818]">
+                                    <th
+                                        class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">
+                                        Registry</th>
+                                    <th
+                                        class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">
+                                        Username</th>
+                                    <th
+                                        class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">
+                                        Status</th>
+                                    <th
+                                        class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary text-right">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 dark:divide-surface-border">
+                                <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="size-8 rounded bg-white p-1 flex items-center justify-center shrink-0">
+                                                <img alt="Docker Hub" class="w-full h-full object-contain"
+                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAene0Xxy23op5Ugclyd-fTMqaZevZVyyrGSW65Oe2RyOOVjzeSdl5ckGVL1kYtibmBiA9hXEeoh4GfFNlBnNShE3AaVcbmLKGQYGWQpigW9XmnnFd7mdSpBTuhCTVpaTRPNOi7yblJwS0rzeSYyzn86Fj7CQME8HId2-05m3SoBAvRhjRTn8cNK65K9Daq6yYQViu4e2Z3n_qoX6U0UwzaxMpjXHvj4oJH5Y7oBZ0Noym1K_ls6iEockuoRHGoQ60DjL6D3pcQjc4" />
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span
+                                                    class="text-sm font-semibold text-slate-900 dark:text-white">Docker
+                                                    Hub</span>
+                                                <span
+                                                    class="text-xs font-mono text-slate-500 dark:text-text-secondary">index.docker.io</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="text-sm text-slate-900 dark:text-white font-medium">dev_master_01</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                            <span class="text-xs text-slate-500 dark:text-text-secondary">Connected 2
+                                                days ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <button
+                                            class="text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 bg-red-500/10 px-3 py-1.5 rounded-md transition-colors">
+                                            Logout
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="size-8 rounded bg-white p-1 flex items-center justify-center shrink-0">
+                                                <img alt="GitHub Container Registry"
+                                                    class="w-full h-full object-contain"
+                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnkDvtflmzKA5xpvDOmGWNwLOculLIuguEwjJnxSB4dCOauC_3XFSIJdTPUOkWr09dBsMoqfj9KXvzqXAI7ZnGhluHkWRw3OR_0EczGUihmTWvgtXjzlGEdnotPRI8jQXAEy59OvnNkVnmlBx0VxlevFLoJlxiA9Yb_sLHa2ey2v9mydKGOwb8QMs2FOWFD_NJEqfFLh-o89UfWjNuXGHUw31MTm7_vlexe7DxvZMfnntYZ3hzUWHU0XRfVZ9S4sM4KHYoZzb5Bs8" />
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span
+                                                    class="text-sm font-semibold text-slate-900 dark:text-white">GitHub
+                                                    CR</span>
+                                                <span
+                                                    class="text-xs font-mono text-slate-500 dark:text-text-secondary">ghcr.io</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="text-sm text-slate-900 dark:text-white font-medium">octocat_dev</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                            <span class="text-xs text-slate-500 dark:text-text-secondary">Connected 5
+                                                hours ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <button
+                                            class="text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 bg-red-500/10 px-3 py-1.5 rounded-md transition-colors">
+                                            Logout
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="size-8 rounded bg-white p-1 flex items-center justify-center shrink-0">
+                                                <span class="material-symbols-outlined text-slate-600">dns</span>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span
+                                                    class="text-sm font-semibold text-slate-900 dark:text-white">Private
+                                                    Registry</span>
+                                                <span
+                                                    class="text-xs font-mono text-slate-500 dark:text-text-secondary">registry.internal.corp</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="text-sm text-slate-900 dark:text-white font-medium">admin_service</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                            <span class="text-xs text-slate-500 dark:text-text-secondary">Connected 1
+                                                week ago</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <button
+                                            class="text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 bg-red-500/10 px-3 py-1.5 rounded-md transition-colors">
+                                            Logout
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors opacity-60">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="size-8 rounded bg-white p-1 flex items-center justify-center shrink-0">
+                                                <img alt="Google Cloud" class="w-full h-full object-contain"
+                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnY9AMctIQRk6CIgngsxmED5Vls52n95OTyeFjAFntTGmRyEgF66nk9GvWq8Emv7pC1o1w-YUpiGJ-mJbT2xJfFtwJwiqejNN0sWxRKUkSY3WewWxWpAqjxWBYKM1ifrqvnYOMjiYh7HoYodyE29lbhdD26wwodDxzqL7UiBjbY248nX7LWF7WgUx5tVhB4OfT11uHhVS422v4QOKBYVriWxdJfD5Jy9cX46Z-Keq1uOzltvthd1DhL-75F7ELx3KIuttAzWkanoM" />
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="text-sm font-semibold text-slate-900 dark:text-white">GCR
+                                                    IO</span>
+                                                <span
+                                                    class="text-xs font-mono text-slate-500 dark:text-text-secondary">gcr.io</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="text-sm text-slate-900 dark:text-white font-medium">project_admin</span>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center gap-2">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+                                            <span
+                                                class="text-xs text-slate-500 dark:text-text-secondary">Disconnected</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <button
+                                            class="text-xs font-medium text-primary hover:text-primary-hover border border-primary/30 hover:border-primary/50 bg-primary/10 px-3 py-1.5 rounded-md transition-colors">
+                                            Reconnect
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

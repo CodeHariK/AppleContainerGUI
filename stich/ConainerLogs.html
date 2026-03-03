@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Docker Compose Manager - Aggregated Logs</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#137fec",
+                        "electric-violet": "#8b5cf6", // Adding electric violet for the pulse
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "charcoal-dark": "#111a22",
+                        "charcoal-light": "#233648",
+                        "log-green": "#4ade80",
+                        "log-blue": "#60a5fa",
+                        "log-yellow": "#facc15",
+                        "log-red": "#f87171",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111a22;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #233648;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #324d67;
+        }
+
+        @keyframes pulse-violet {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(139, 92, 246, 0);
+            }
+        }
+
+        .animate-pulse-violet {
+            animation: pulse-violet 2s infinite;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#233648] bg-white dark:bg-charcoal-dark px-6 py-3 shrink-0">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3 text-slate-900 dark:text-white">
+                <div class="size-8 flex items-center justify-center bg-blue-600/10 rounded-lg text-primary">
+                    <span class="material-symbols-outlined !text-[24px]">deployed_code</span>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-tight">Docker Compose Manager</h2>
+            </div>
+            <nav class="hidden md:flex items-center gap-1">
+                <a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                    href="#">Projects</a>
+                <a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                    href="#">Containers</a>
+                <a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                    href="#">Images</a>
+                <a class="text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                    href="#">Volumes</a>
+            </nav>
+        </div>
+        <div class="flex items-center justify-end gap-4">
+            <div class="hidden lg:flex w-64 items-center rounded-lg bg-slate-100 dark:bg-charcoal-light h-9 px-3">
+                <span class="material-symbols-outlined text-slate-400 !text-[20px]">search</span>
+                <input
+                    class="w-full bg-transparent border-none focus:ring-0 text-sm placeholder:text-slate-400 text-slate-900 dark:text-white ml-2"
+                    placeholder="Search resources..." />
+            </div>
+            <div class="flex gap-2">
+                <button
+                    class="flex size-9 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-charcoal-light text-slate-500 dark:text-slate-300 transition-colors">
+                    <span class="material-symbols-outlined !text-[20px]">notifications</span>
+                </button>
+                <button
+                    class="flex size-9 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-charcoal-light text-slate-500 dark:text-slate-300 transition-colors">
+                    <span class="material-symbols-outlined !text-[20px]">settings</span>
+                </button>
+                <button
+                    class="ml-2 size-9 rounded-full bg-gray-200 dark:bg-charcoal-light overflow-hidden border border-slate-200 dark:border-slate-700">
+                    <img alt="User Profile" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvQ-ZIwIzwWijEP_lmpSe78aLMXhgnT6vEt9K5nkl8tOj22dNdXuRitJ6gyg_E1yLONl6UfqqNcDycyBtqZMz40MdVQNHXZbKsjmEoBBXSb8ahr6FNwdU8fdw9yHFSEY5EAwmIJ1M1THmiplAG8bnsaAvc-bM8zQ_0xgvb5637njiTtTJnNNxTv_nFw_XYut7c5dkJE6_SVipy0VVLYzdQ3Nhuh75Py5yIm8LS6sY4Q9CE7VYJglAvDBsEICQH7NJ65uutwinezFc" />
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- Breadcrumbs & Title Bar -->
+    <div
+        class="bg-white dark:bg-charcoal-dark border-b border-slate-200 dark:border-[#233648] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div>
+            <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-1">
+                <a class="hover:text-primary transition-colors" href="#">Projects</a>
+                <span class="text-slate-300 dark:text-slate-600">/</span>
+                <a class="hover:text-primary transition-colors" href="#">My-Web-App</a>
+                <span class="text-slate-300 dark:text-slate-600">/</span>
+                <span class="text-slate-900 dark:text-white font-medium">Combined Logs</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-xl font-bold text-slate-900 dark:text-white">Live Stack Logs</h1>
+                <div
+                    class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-electric-violet/10 border border-electric-violet/20">
+                    <div class="size-2 rounded-full bg-electric-violet animate-pulse-violet"></div>
+                    <span class="text-xs font-semibold text-electric-violet uppercase tracking-wider">Streaming</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <div class="hidden md:flex items-center bg-slate-100 dark:bg-charcoal-light rounded-lg p-0.5">
+                <button
+                    class="px-3 py-1.5 rounded-md bg-white dark:bg-charcoal-dark shadow-sm text-xs font-medium text-slate-900 dark:text-white">Tail</button>
+                <button
+                    class="px-3 py-1.5 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Head</button>
+            </div>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block"></div>
+            <button
+                class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-charcoal-light dark:hover:bg-[#324d67] text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors border border-transparent dark:border-slate-700">
+                <span class="material-symbols-outlined !text-[18px]">pause</span>
+                <span>Pause</span>
+            </button>
+            <button
+                class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-charcoal-light dark:hover:bg-[#324d67] text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors border border-transparent dark:border-slate-700">
+                <span class="material-symbols-outlined !text-[18px]">block</span>
+                <span>Clear</span>
+            </button>
+            <button
+                class="group relative flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-blue-500/20">
+                <span class="material-symbols-outlined !text-[18px]">download</span>
+                <span>Export</span>
+                <!-- Dropdown for export (hidden by default logic, visualized here as standard button for simplicity as per request strictness) -->
+            </button>
+        </div>
+    </div>
+    <!-- Main Content Area -->
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Sidebar Filters -->
+        <aside
+            class="w-64 bg-white dark:bg-charcoal-dark border-r border-slate-200 dark:border-[#233648] flex flex-col shrink-0 z-10 hidden lg:flex">
+            <div class="p-4 border-b border-slate-200 dark:border-[#233648]">
+                <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Sources
+                </h3>
+                <div class="space-y-1">
+                    <label
+                        class="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-[#1a2632] dark:hover:bg-[#233648] cursor-pointer group transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input checked=""
+                                class="rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary bg-transparent"
+                                type="checkbox" />
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200">All Containers</span>
+                        </div>
+                        <span
+                            class="text-xs text-slate-400 bg-slate-200 dark:bg-[#324d67] px-1.5 py-0.5 rounded">12k</span>
+                    </label>
+                    <label
+                        class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1a2632] cursor-pointer group transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input checked=""
+                                class="rounded border-slate-300 dark:border-slate-600 text-log-blue focus:ring-log-blue bg-transparent"
+                                type="checkbox" />
+                            <div class="flex items-center gap-2">
+                                <div class="size-2 rounded-full bg-log-blue"></div>
+                                <span class="text-sm text-slate-600 dark:text-slate-300">api-1</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label
+                        class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1a2632] cursor-pointer group transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input checked=""
+                                class="rounded border-slate-300 dark:border-slate-600 text-log-green focus:ring-log-green bg-transparent"
+                                type="checkbox" />
+                            <div class="flex items-center gap-2">
+                                <div class="size-2 rounded-full bg-log-green"></div>
+                                <span class="text-sm text-slate-600 dark:text-slate-300">db-1</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label
+                        class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1a2632] cursor-pointer group transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input checked=""
+                                class="rounded border-slate-300 dark:border-slate-600 text-log-red focus:ring-log-red bg-transparent"
+                                type="checkbox" />
+                            <div class="flex items-center gap-2">
+                                <div class="size-2 rounded-full bg-log-red"></div>
+                                <span class="text-sm text-slate-600 dark:text-slate-300">worker-1</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label
+                        class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1a2632] cursor-pointer group transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input checked=""
+                                class="rounded border-slate-300 dark:border-slate-600 text-log-yellow focus:ring-log-yellow bg-transparent"
+                                type="checkbox" />
+                            <div class="flex items-center gap-2">
+                                <div class="size-2 rounded-full bg-log-yellow"></div>
+                                <span class="text-sm text-slate-600 dark:text-slate-300">redis-1</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="p-4 flex-1">
+                <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Log Level
+                </h3>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <button
+                            class="flex-1 text-xs font-medium py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1a2632] dark:hover:bg-[#233648] text-slate-600 dark:text-slate-300 rounded border border-transparent dark:border-slate-700 transition-all">Info</button>
+                        <button
+                            class="flex-1 text-xs font-medium py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1a2632] dark:hover:bg-[#233648] text-slate-600 dark:text-slate-300 rounded border border-transparent dark:border-slate-700 transition-all">Warn</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            class="flex-1 text-xs font-medium py-1.5 px-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-900/30 transition-all">Error</button>
+                        <button
+                            class="flex-1 text-xs font-medium py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1a2632] dark:hover:bg-[#233648] text-slate-600 dark:text-slate-300 rounded border border-transparent dark:border-slate-700 transition-all">Debug</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 dark:border-[#233648]">
+                <button
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#233648] dark:hover:bg-[#324d67] text-slate-700 dark:text-white text-sm font-medium rounded-lg transition-colors">
+                    <span class="material-symbols-outlined !text-[18px]">tune</span>
+                    Advanced Filters
+                </button>
+            </div>
+        </aside>
+        <!-- Log Output Console -->
+        <main class="flex-1 bg-[#0c1219] custom-scrollbar overflow-y-auto font-mono text-sm relative">
+            <!-- Timestamp marker overlay -->
+            <div class="sticky top-0 z-10 flex justify-center py-2 pointer-events-none">
+                <span
+                    class="bg-[#233648]/90 backdrop-blur text-xs text-slate-300 px-3 py-1 rounded-full shadow-lg border border-slate-700">Today,
+                    Oct 24</span>
+            </div>
+            <div class="p-6 space-y-0.5 min-h-full pb-20">
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:01.452</div>
+                    <div class="w-24 shrink-0 text-log-blue font-bold text-xs pt-0.5">[api-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">INFO: Starting development server
+                        at http://0.0.0.0:8000/</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:02.105</div>
+                    <div class="w-24 shrink-0 text-log-green font-bold text-xs pt-0.5">[db-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">LOG: database system is ready to
+                        accept connections</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:02.122</div>
+                    <div class="w-24 shrink-0 text-log-yellow font-bold text-xs pt-0.5">[redis-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">1:M 24 Oct 2023 10:42:02.122 *
+                        Ready to accept connections</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:03.501</div>
+                    <div class="w-24 shrink-0 text-log-blue font-bold text-xs pt-0.5">[api-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">INFO: "GET /health" 200 OK</div>
+                </div>
+                <!-- Log Entry Error -->
+                <div
+                    class="flex items-start group bg-red-900/10 hover:bg-red-900/20 -mx-6 px-6 py-0.5 border-l-2 border-red-500">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:05.221</div>
+                    <div class="w-24 shrink-0 text-log-red font-bold text-xs pt-0.5">[worker-1]</div>
+                    <div class="flex-1 text-red-300 break-all whitespace-pre-wrap">ERROR: Connection to Redis timed out
+                        after 5000ms. Retrying...</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:05.800</div>
+                    <div class="w-24 shrink-0 text-log-blue font-bold text-xs pt-0.5">[api-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">DEBUG: Processing request payload:
+                        {"user_id": 1245, "action": "update_profile"}</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:06.112</div>
+                    <div class="w-24 shrink-0 text-log-green font-bold text-xs pt-0.5">[db-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">LOG: statement: UPDATE users SET
+                        last_login = NOW() WHERE id = 1245;</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:06.145</div>
+                    <div class="w-24 shrink-0 text-log-blue font-bold text-xs pt-0.5">[api-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">INFO: "POST /api/v1/users/1245" 200
+                        OK</div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:07.002</div>
+                    <div class="w-24 shrink-0 text-log-red font-bold text-xs pt-0.5">[worker-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">INFO: Job #49201 completed
+                        successfully in 230ms</div>
+                </div>
+                <!-- Log Entry - Multiline simulation -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:08.400</div>
+                    <div class="w-24 shrink-0 text-log-blue font-bold text-xs pt-0.5">[api-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">Traceback (most recent call last):
+                        File "/app/main.py", line 45, in <module>
+                            app.run()
+                            File "/usr/local/lib/python3.9/site-packages/flask/app.py", line 112, in run
+                            ...
+                            INFO: Handled exception gracefully.</module>
+                    </div>
+                </div>
+                <!-- Log Entry -->
+                <div class="flex items-start group hover:bg-white/5 -mx-6 px-6 py-0.5 animate-pulse bg-white/5">
+                    <div class="w-32 shrink-0 text-slate-500 text-xs pt-0.5">10:42:09.112</div>
+                    <div class="w-24 shrink-0 text-log-green font-bold text-xs pt-0.5">[db-1]</div>
+                    <div class="flex-1 text-slate-300 break-all whitespace-pre-wrap">LOG: checkpoint starting: time
+                    </div>
+                </div>
+            </div>
+            <!-- Floating Scroll to Bottom Button -->
+            <button
+                class="absolute bottom-6 right-8 size-10 bg-primary hover:bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-20">
+                <span class="material-symbols-outlined !text-[24px]">arrow_downward</span>
+            </button>
+        </main>
+    </div>
+</body>
+
+</html>

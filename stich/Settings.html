@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Docker Manager - Settings</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b5cf6", "primary-hover": "#7c3aed", // Electric Violet
+                        "accent": "#8b5cf6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121212", // Midnight Charcoal
+                        "surface-dark": "#1e1e1e",
+                        "surface-border": "#333333",
+                        "text-secondary": "#a1a1aa",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-surface-border px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+        <div class="flex items-center gap-4 dark:text-white text-slate-900">
+            <div class="size-8 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">deployed_code</span>
+            </div>
+            <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Docker Manager</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <nav class="hidden md:flex items-center gap-9">
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors text-slate-500 dark:text-text-secondary"
+                    href="#">Dashboard</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors text-slate-500 dark:text-text-secondary"
+                    href="#">Containers</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors text-slate-500 dark:text-text-secondary"
+                    href="#">Images</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors text-slate-500 dark:text-text-secondary"
+                    href="#">Volumes</a>
+                <a class="text-sm font-medium leading-normal hover:text-primary transition-colors text-slate-500 dark:text-text-secondary"
+                    href="#">Networks</a>
+                <a class="text-sm font-medium leading-normal text-primary border-b-2 border-primary pb-0.5"
+                    href="#">Settings</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <div class="bg-center bg-no-repeat bg-cover rounded-full size-9 ring-2 ring-surface-border cursor-pointer"
+                    data-alt="User profile avatar"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBUNbar0KRi2wwoj-G12zeDmUygKG1JDIZQEvok0pXeY7ATbGAa8vMRrf9BFWC8sCXKeQgGWTT6LAh7-YSso1o_t41sh55QYRMMVD68lsOwuPJ10FPZeBXDLOCnfaYGrxCffQHFzPlBuPVN0JUsC350XAFwm3qUGQqM6cCtr6vxJ2dZTYVQWWYwLujGf3wQCEDWHBj4E5UgJmyXR55UBodZT8Y2mZ9pkPbMsuV0WHoNYaL0fT7v_HWV9IJVEAbTQL_EPLDnRpE96vg");'>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full">
+        <div class="flex flex-col gap-6 mb-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">Global
+                        Settings</h1>
+                    <p class="text-slate-500 dark:text-text-secondary">Configure system-wide preferences and properties.
+                    </p>
+                </div>
+                <button
+                    class="flex items-center gap-2 h-10 px-4 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-violet-900/20">
+                    <span class="material-symbols-outlined text-[20px]">save</span>
+                    <span>Save Changes</span>
+                </button>
+            </div>
+        </div>
+        <section class="mb-10">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">General</h3>
+            <div
+                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl p-6">
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-slate-900 dark:text-white mb-3">Interface Theme</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label
+                            class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#262626] p-4 shadow-sm focus:outline-none hover:border-primary/50 transition-colors group">
+                            <input class="peer sr-only" name="theme-option" type="radio" value="light" />
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-sm font-bold text-slate-900 dark:text-white">Light</span>
+                                    <span
+                                        class="mt-1 flex items-center text-xs text-slate-500 dark:text-text-secondary">Standard
+                                        light mode</span>
+                                </span>
+                            </span>
+                            <span aria-hidden="true"
+                                class="pointer-events-none absolute -inset-px rounded-xl border-2 border-transparent peer-checked:border-primary"></span>
+                            <span aria-hidden="true"
+                                class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white peer-checked:border-transparent peer-checked:bg-primary mt-0.5">
+                                <span class="size-2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></span>
+                            </span>
+                        </label>
+                        <label
+                            class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#262626] p-4 shadow-sm focus:outline-none hover:border-primary/50 transition-colors group">
+                            <input class="peer sr-only" name="theme-option" type="radio" value="dark" />
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-sm font-bold text-slate-900 dark:text-white">Dark</span>
+                                    <span
+                                        class="mt-1 flex items-center text-xs text-slate-500 dark:text-text-secondary">Standard
+                                        dark mode</span>
+                                </span>
+                            </span>
+                            <span aria-hidden="true"
+                                class="pointer-events-none absolute -inset-px rounded-xl border-2 border-transparent peer-checked:border-primary"></span>
+                            <span aria-hidden="true"
+                                class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white peer-checked:border-transparent peer-checked:bg-primary mt-0.5">
+                                <span class="size-2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></span>
+                            </span>
+                        </label>
+                        <label
+                            class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#262626] p-4 shadow-sm focus:outline-none hover:border-primary/50 transition-colors group">
+                            <input checked="" class="peer sr-only" name="theme-option" type="radio" value="midnight" />
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-sm font-bold text-slate-900 dark:text-white">Midnight
+                                        Charcoal</span>
+                                    <span
+                                        class="mt-1 flex items-center text-xs text-slate-500 dark:text-text-secondary">Deep
+                                        contrast mode</span>
+                                </span>
+                            </span>
+                            <span aria-hidden="true"
+                                class="pointer-events-none absolute -inset-px rounded-xl border-2 border-transparent peer-checked:border-primary"></span>
+                            <span aria-hidden="true"
+                                class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white peer-checked:border-transparent peer-checked:bg-primary mt-0.5">
+                                <span class="size-2 rounded-full bg-white opacity-0 peer-checked:opacity-100"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Global System Properties</h3>
+                <button class="text-sm text-primary font-medium hover:text-primary-hover flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    Add Property
+                </button>
+            </div>
+            <div
+                class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#181818]">
+                                <th
+                                    class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary w-32">
+                                    ID</th>
+                                <th
+                                    class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">
+                                    Property Name</th>
+                                <th
+                                    class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">
+                                    Value</th>
+                                <th
+                                    class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary w-32">
+                                    Type</th>
+                                <th
+                                    class="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary text-right w-32">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-surface-border">
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="font-mono text-xs text-slate-500 dark:text-slate-400">001</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-sm font-semibold text-slate-900 dark:text-white">system.debug_mode</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400">
+                                        false
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-text-secondary bg-slate-100 dark:bg-surface-border px-2 py-1 rounded">Boolean</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="text-slate-400 hover:text-primary transition-colors"
+                                            title="Edit">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button class="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Reset">
+                                            <span class="material-symbols-outlined text-[20px]">restart_alt</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="font-mono text-xs text-slate-500 dark:text-slate-400">002</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-sm font-semibold text-slate-900 dark:text-white">api.timeout_ms</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300 font-mono">5000</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-text-secondary bg-slate-100 dark:bg-surface-border px-2 py-1 rounded">Number</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="text-slate-400 hover:text-primary transition-colors"
+                                            title="Edit">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button class="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Reset">
+                                            <span class="material-symbols-outlined text-[20px]">restart_alt</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="font-mono text-xs text-slate-500 dark:text-slate-400">003</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-sm font-semibold text-slate-900 dark:text-white">logger.level</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300">INFO</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-text-secondary bg-slate-100 dark:bg-surface-border px-2 py-1 rounded">String</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="text-slate-400 hover:text-primary transition-colors"
+                                            title="Edit">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button class="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Reset">
+                                            <span class="material-symbols-outlined text-[20px]">restart_alt</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="font-mono text-xs text-slate-500 dark:text-slate-400">004</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-sm font-semibold text-slate-900 dark:text-white">features.experimental</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400">
+                                        true
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-text-secondary bg-slate-100 dark:bg-surface-border px-2 py-1 rounded">Boolean</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="text-slate-400 hover:text-primary transition-colors"
+                                            title="Edit">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button class="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Reset">
+                                            <span class="material-symbols-outlined text-[20px]">restart_alt</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="group hover:bg-slate-50 dark:hover:bg-[#262626] transition-colors">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="font-mono text-xs text-slate-500 dark:text-slate-400">005</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-sm font-semibold text-slate-900 dark:text-white">notifications.email</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300">admin@local.host</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-text-secondary bg-slate-100 dark:bg-surface-border px-2 py-1 rounded">String</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button class="text-slate-400 hover:text-primary transition-colors"
+                                            title="Edit">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button class="text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Reset">
+                                            <span class="material-symbols-outlined text-[20px]">restart_alt</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div
+                    class="px-6 py-4 border-t border-slate-200 dark:border-surface-border flex items-center justify-between bg-slate-50 dark:bg-[#181818]">
+                    <div class="text-sm text-slate-500 dark:text-text-secondary">
+                        Showing <span class="font-medium text-slate-900 dark:text-white">1</span> to <span
+                            class="font-medium text-slate-900 dark:text-white">5</span> of <span
+                            class="font-medium text-slate-900 dark:text-white">24</span> properties
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="px-3 py-1 text-sm font-medium rounded border border-slate-200 dark:border-surface-border bg-white dark:bg-surface-dark text-slate-400 cursor-not-allowed">
+                            Previous
+                        </button>
+                        <button
+                            class="px-3 py-1 text-sm font-medium rounded border border-slate-200 dark:border-surface-border bg-white dark:bg-surface-dark text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-surface-border transition-colors">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

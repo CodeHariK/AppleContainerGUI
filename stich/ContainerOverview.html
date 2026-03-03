@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Container Detailed Overview - web-server-1</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b5cf6", // Electric Violet
+                        "primary-hover": "#7c3aed",
+                        "midnight": "#121212", // Rich Black
+                        "charcoal": "#1e1e1e", // Deep Charcoal
+                        "surface": "#252526", // Slightly lighter charcoal
+                        "border-dark": "#333333",
+                        "text-subtle": "#9ca3af",
+                        "terminal-green": "#22c55e",
+                        "terminal-blue": "#60a5fa"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #333333;
+                border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background-color: #4b5563;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-midnight text-slate-100 font-display min-h-screen flex flex-col overflow-hidden">
+    <header
+        class="flex items-center justify-between border-b border-border-dark px-6 py-3 bg-charcoal w-full z-10 shrink-0">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="size-8 bg-primary/20 rounded flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined">deployed_code</span>
+                </div>
+                <h2 class="text-lg font-bold tracking-tight">Docker Manager</h2>
+            </div>
+            <div class="hidden md:flex items-center gap-1 bg-midnight rounded-lg px-2 h-9 border border-border-dark">
+                <span class="material-symbols-outlined text-text-subtle text-[20px]">search</span>
+                <input
+                    class="bg-transparent border-none text-sm text-slate-100 placeholder:text-text-subtle focus:ring-0 w-48"
+                    placeholder="Search resources..." />
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <nav class="hidden lg:flex items-center gap-6">
+                <a class="text-text-subtle hover:text-primary transition-colors text-sm font-medium"
+                    href="#">Dashboard</a>
+                <a class="text-primary text-sm font-medium" href="#">Projects</a>
+                <a class="text-text-subtle hover:text-primary transition-colors text-sm font-medium" href="#">Images</a>
+                <a class="text-text-subtle hover:text-primary transition-colors text-sm font-medium"
+                    href="#">Volumes</a>
+            </nav>
+            <div class="h-6 w-px bg-border-dark hidden lg:block"></div>
+            <div class="flex items-center gap-4">
+                <button class="relative text-text-subtle hover:text-slate-100">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-0 right-0 size-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div class="bg-center bg-no-repeat bg-cover rounded-full size-9 border border-border-dark"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDqW2VF09w1xGkTwFOZun8JpMH9Elb7HErtZpoytj5kGLfar3B8weYfmU0rJB3iiVXbs2Zq1xOyflPdk9mLajLSgoL0jouC8UTgiIxOo3UfuotD7RWDObr585igW4_0jOvLgwRfHoEzPNkWAPOABBm8to2Je63v6SsNJrZYszuAGdoF6QoG0Lni7J5wNDnF0h3LCqmVRqfpItHIhaZrD0TNa7Ai-djMcVgS1DHTvVAIdZxK72v91gM4ue8fhh3B5jC3pUm67af_D50");'>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="flex flex-col border-b border-border-dark bg-charcoal shrink-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4">
+            <div>
+                <div class="flex items-center gap-2 text-sm text-text-subtle mb-1">
+                    <a class="hover:text-slate-100" href="#">Projects</a>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <a class="hover:text-slate-100" href="#">My Web App</a>
+                    <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    <span class="text-primary font-medium">web-server-1</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold text-slate-100">web-server-1</h1>
+                    <span
+                        class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 text-xs font-bold uppercase tracking-wider border border-green-500/20 flex items-center gap-1">
+                        <span class="size-1.5 rounded-full bg-green-500"></span>
+                        Running
+                    </span>
+                    <span class="text-xs text-text-subtle">Up 2 hours</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface border border-border-dark text-slate-200 hover:bg-border-dark transition-colors text-sm font-medium">
+                    <span class="material-symbols-outlined text-[18px]">refresh</span>
+                    Restart
+                </button>
+                <button
+                    class="flex items-center gap-2 px-3 py-1.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-colors text-sm font-medium">
+                    <span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                    Stop
+                </button>
+            </div>
+        </div>
+        <div class="flex px-6 gap-8">
+            <a class="pb-3 border-b-2 border-primary text-primary text-sm font-bold" href="#">Overview &amp; Inspect</a>
+            <a class="pb-3 border-b-2 border-transparent text-text-subtle hover:text-slate-100 text-sm font-medium"
+                href="#">Logs</a>
+            <a class="pb-3 border-b-2 border-transparent text-text-subtle hover:text-slate-100 text-sm font-medium"
+                href="#">Files &amp; Terminal</a>
+            <a class="pb-3 border-b-2 border-transparent text-text-subtle hover:text-slate-100 text-sm font-medium"
+                href="#">Stats</a>
+            <a class="pb-3 border-b-2 border-transparent text-text-subtle hover:text-slate-100 text-sm font-medium"
+                href="#">Settings</a>
+        </div>
+    </div>
+    <main class="flex-1 overflow-y-auto custom-scrollbar bg-midnight p-6">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">info</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">General Information</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-text-subtle uppercase">Container Name</span>
+                        <span
+                            class="font-mono text-sm text-slate-100 bg-midnight px-2 py-1 rounded border border-border-dark">web-server-1</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-text-subtle uppercase">Container ID</span>
+                        <span
+                            class="font-mono text-sm text-slate-100 bg-midnight px-2 py-1 rounded border border-border-dark">f82a93b4e1c2d3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs text-text-subtle uppercase">Image</span>
+                            <span class="font-mono text-sm text-primary">nginx:latest</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs text-text-subtle uppercase">Platform</span>
+                            <span class="font-mono text-sm text-slate-300">linux/amd64</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">memory</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">Resources &amp; Limits</h3>
+                </div>
+                <div class="p-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <span class="text-xs text-text-subtle uppercase block mb-3">CPU Allocation</span>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-xs font-mono">
+                                    <span class="text-text-subtle">NanoCPUs</span>
+                                    <span class="text-slate-100">500,000,000 (0.5)</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-midnight rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary" style="width: 50%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-text-subtle uppercase block mb-3">Memory Allocation</span>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-xs font-mono">
+                                    <span class="text-text-subtle">Limit</span>
+                                    <span class="text-slate-100">512 MB</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-midnight rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary" style="width: 25%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-border-dark grid grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs text-text-subtle uppercase">Restart Policy</span>
+                            <span class="font-mono text-sm text-slate-100">unless-stopped</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs text-text-subtle uppercase">PIDs Limit</span>
+                            <span class="font-mono text-sm text-slate-100">Unlimited</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden lg:col-span-2">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">lan</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">Network &amp; Ports</h3>
+                </div>
+                <div class="p-5">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-bold text-text-subtle uppercase">Configuration</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-border-dark/50">
+                                    <span class="text-sm text-text-subtle">Network Mode</span>
+                                    <span class="text-sm font-mono text-slate-100">bridge</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-border-dark/50">
+                                    <span class="text-sm text-text-subtle">IP Address</span>
+                                    <span class="text-sm font-mono text-primary">172.18.0.3</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-border-dark/50">
+                                    <span class="text-sm text-text-subtle">MAC Address</span>
+                                    <span class="text-sm font-mono text-slate-100">02:42:ac:12:00:03</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2 space-y-4">
+                            <h4 class="text-xs font-bold text-text-subtle uppercase">Port Mappings</h4>
+                            <div class="overflow-hidden border border-border-dark rounded bg-midnight">
+                                <table class="w-full text-left text-sm font-mono">
+                                    <thead
+                                        class="bg-surface/50 text-text-subtle uppercase text-[10px] tracking-widest border-b border-border-dark">
+                                        <tr>
+                                            <th class="px-4 py-2 font-medium">Host IP</th>
+                                            <th class="px-4 py-2 font-medium">Host Port</th>
+                                            <th class="px-4 py-2 font-medium">Container Port</th>
+                                            <th class="px-4 py-2 font-medium">Protocol</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-border-dark/50">
+                                        <tr class="hover:bg-white/5 transition-colors">
+                                            <td class="px-4 py-3 text-slate-400">0.0.0.0</td>
+                                            <td class="px-4 py-3 text-primary font-bold">8080</td>
+                                            <td class="px-4 py-3 text-slate-100">80</td>
+                                            <td class="px-4 py-3"><span
+                                                    class="px-1.5 py-0.5 rounded bg-charcoal border border-border-dark text-[10px]">TCP</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-white/5 transition-colors">
+                                            <td class="px-4 py-3 text-slate-400">:::</td>
+                                            <td class="px-4 py-3 text-primary font-bold">8080</td>
+                                            <td class="px-4 py-3 text-slate-100">80</td>
+                                            <td class="px-4 py-3"><span
+                                                    class="px-1.5 py-0.5 rounded bg-charcoal border border-border-dark text-[10px]">TCP</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">storage</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">Volumes &amp; Mounts</h3>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div
+                        class="bg-midnight rounded border border-border-dark p-3 group hover:border-primary/50 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase text-primary tracking-wider">Bind Mount</span>
+                            <span class="text-[10px] font-bold uppercase text-slate-500">Read/Write</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-text-subtle uppercase">Host Path</span>
+                                <span
+                                    class="text-xs font-mono text-slate-300 truncate">/home/user/projects/web-app/src</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-text-subtle uppercase">Container Path</span>
+                                <span class="text-xs font-mono text-slate-100">/app/src</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-midnight rounded border border-border-dark p-3 group hover:border-primary/50 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase text-primary tracking-wider">Volume</span>
+                            <span class="text-[10px] font-bold uppercase text-slate-500">Read/Write</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-text-subtle uppercase">Source</span>
+                                <span class="text-xs font-mono text-slate-300 truncate">web_app_data_volume</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-text-subtle uppercase">Destination</span>
+                                <span class="text-xs font-mono text-slate-100">/var/lib/app/data</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">settings_input_component</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">Environment Variables</h3>
+                </div>
+                <div class="p-5">
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex items-center gap-3 bg-midnight p-2 rounded border border-border-dark group">
+                            <span class="text-terminal-blue w-32 shrink-0">NODE_ENV</span>
+                            <span class="text-text-subtle">=</span>
+                            <span class="text-terminal-green truncate">production</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-midnight p-2 rounded border border-border-dark group">
+                            <span class="text-terminal-blue w-32 shrink-0">PORT</span>
+                            <span class="text-text-subtle">=</span>
+                            <span class="text-terminal-green truncate">80</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-midnight p-2 rounded border border-border-dark group">
+                            <span class="text-terminal-blue w-32 shrink-0">DB_HOST</span>
+                            <span class="text-text-subtle">=</span>
+                            <span class="text-terminal-green truncate">db-service-1</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-midnight p-2 rounded border border-border-dark group">
+                            <span class="text-terminal-blue w-32 shrink-0">API_KEY</span>
+                            <span class="text-text-subtle">=</span>
+                            <span class="text-terminal-green truncate">********-****-****-****-************</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-midnight p-2 rounded border border-border-dark group">
+                            <span class="text-terminal-blue w-32 shrink-0">PATH</span>
+                            <span class="text-text-subtle">=</span>
+                            <span
+                                class="text-terminal-green truncate">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-charcoal rounded-xl border border-border-dark overflow-hidden lg:col-span-2">
+                <div class="px-5 py-4 border-b border-border-dark bg-surface/50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-xl">label</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">Metadata &amp; Labels</h3>
+                </div>
+                <div class="p-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xs font-bold text-text-subtle uppercase mb-4">Dates</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-border-dark/50">
+                                    <span class="text-sm text-text-subtle">Created At</span>
+                                    <span class="text-sm font-mono text-slate-100">2023-10-24 08:15:32</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-border-dark/50">
+                                    <span class="text-sm text-text-subtle">Started At</span>
+                                    <span class="text-sm font-mono text-slate-100">2023-10-24 10:20:01</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-sm text-text-subtle">Finished At</span>
+                                    <span class="text-sm font-mono text-slate-500">0001-01-01 00:00:00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-text-subtle uppercase mb-4">Labels</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <div
+                                    class="flex items-center bg-midnight border border-border-dark rounded-full px-3 py-1">
+                                    <span
+                                        class="text-[10px] text-primary font-bold mr-2 uppercase">com.docker.compose.project:</span>
+                                    <span class="text-xs font-mono text-slate-100">my-web-app</span>
+                                </div>
+                                <div
+                                    class="flex items-center bg-midnight border border-border-dark rounded-full px-3 py-1">
+                                    <span
+                                        class="text-[10px] text-primary font-bold mr-2 uppercase">com.docker.compose.service:</span>
+                                    <span class="text-xs font-mono text-slate-100">web-server</span>
+                                </div>
+                                <div
+                                    class="flex items-center bg-midnight border border-border-dark rounded-full px-3 py-1">
+                                    <span class="text-[10px] text-primary font-bold mr-2 uppercase">maintainer:</span>
+                                    <span class="text-xs font-mono text-slate-100">devops-team</span>
+                                </div>
+                                <div
+                                    class="flex items-center bg-midnight border border-border-dark rounded-full px-3 py-1">
+                                    <span class="text-[10px] text-primary font-bold mr-2 uppercase">version:</span>
+                                    <span class="text-xs font-mono text-slate-100">1.0.4-stable</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer
+        class="bg-charcoal border-t border-border-dark px-6 py-2 flex justify-between items-center text-[10px] text-text-subtle font-mono shrink-0">
+        <div class="flex gap-4">
+            <span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-green-500"></span> Engine
+                24.0.7</span>
+            <span>API 1.43</span>
+        </div>
+        <div class="flex gap-4">
+            <span>OS: Linux 6.2.0-35-generic</span>
+            <span>Architecture: x86_64</span>
+        </div>
+    </footer>
+
+</body>
+
+</html>

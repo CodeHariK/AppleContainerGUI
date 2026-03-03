@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Volumes Management - Midnight Charcoal</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9c06f9",
+                        "midnight": "#121212",
+                        "card-dark": "#1e1e1e",
+                        "border-dark": "#2a2a2a",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-midnight text-slate-100 font-sans antialiased;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <header
+            class="flex items-center justify-between border-b border-border-dark bg-midnight px-8 py-4 sticky top-0 z-50">
+            <div class="flex items-center gap-10">
+                <div class="flex items-center gap-3">
+                    <div class="size-9 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-3xl">storage</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold tracking-tight">DockerFlow</h2>
+                </div>
+                <nav class="flex items-center gap-8">
+                    <a class="text-slate-400 hover:text-white text-sm font-semibold transition-colors"
+                        href="#">Dashboard</a>
+                    <a class="text-slate-400 hover:text-white text-sm font-semibold transition-colors"
+                        href="#">Containers</a>
+                    <a class="text-primary text-sm font-bold border-b-2 border-primary py-1" href="#">Volumes</a>
+                    <a class="text-slate-400 hover:text-white text-sm font-semibold transition-colors"
+                        href="#">Networks</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-6">
+                <label class="relative block w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                        <span class="material-symbols-outlined text-xl">search</span>
+                    </span>
+                    <input
+                        class="w-full bg-card-dark border border-border-dark rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-600"
+                        placeholder="Search volumes..." />
+                </label>
+                <div class="flex items-center gap-3">
+                    <button
+                        class="bg-primary text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-lg hover:brightness-110 transition-all">
+                        New Volume
+                    </button>
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 ring-1 ring-border-dark"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDZxTYm0P5EZnq6oe37siyu8K2bjj3rpqCCo6Hw4cHU4ehKtfXgztAOSurpl-lMOdWPyA0qlt1_q_8dcRx3Jo95B-sCTVlud3eap3_ONS0BFo0gcSiyFfJ65KGJCzLqhE2HNiXwzCoay27z3PFDnkNJGZumJTPh-w5S6Wu5Jxfq9_Tqxsc6DMgAq703BgC4tU5mhRxiADbWnlVMDaNRmH2E92jzsF9hUASt5B6v87BG_wBBopAQ4WXmQX2z46ZeBz8IYERhdtjYits");'>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <main class="flex-1 max-w-[1600px] mx-auto w-full px-8 py-10">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-10">
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-3xl font-black tracking-tight text-white">Volumes Management</h1>
+                    <p class="text-slate-400 text-sm font-medium">12 active volumes across 3 storage drivers</p>
+                </div>
+                <div class="flex gap-3">
+                    <button
+                        class="flex items-center gap-2 rounded-lg px-4 py-2 bg-card-dark border border-border-dark text-slate-300 font-semibold text-sm hover:bg-border-dark transition-all">
+                        <span class="material-symbols-outlined text-lg">filter_alt</span>
+                        Filters
+                    </button>
+                    <button
+                        class="flex items-center gap-2 rounded-lg px-5 py-2 bg-primary text-white font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/10">
+                        <span class="material-symbols-outlined text-lg">add</span>
+                        Create Volume
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <div class="bg-card-dark p-6 rounded-xl border border-border-dark shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Total Storage</p>
+                    <p class="text-3xl font-black mt-2 text-white">42.8 <span
+                            class="text-sm font-medium text-slate-500 uppercase">GB</span></p>
+                </div>
+                <div class="bg-card-dark p-6 rounded-xl border border-border-dark shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Active Drivers</p>
+                    <p class="text-3xl font-black mt-2 text-white">3</p>
+                </div>
+                <div class="bg-card-dark p-6 rounded-xl border border-border-dark shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unused Volumes</p>
+                    <p class="text-3xl font-black mt-2 text-amber-500">4</p>
+                </div>
+                <div
+                    class="bg-card-dark p-6 rounded-xl border border-primary/20 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-1 h-full bg-primary"></div>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em]">Health Status</p>
+                    <p class="text-3xl font-black mt-2 text-emerald-500">Optimal</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div
+                    class="flex flex-col bg-card-dark border border-border-dark rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <span class="material-symbols-outlined">hard_drive</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white tracking-tight">db_data</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                        <span
+                                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Local
+                                            Driver</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="text-slate-600 hover:text-red-500 transition-colors p-1">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mount
+                                    Point</span>
+                                <div
+                                    class="text-xs font-mono bg-midnight p-2.5 rounded border border-border-dark text-slate-300 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    /var/lib/docker/volumes/db_data/_data
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used
+                                    By</span>
+                                <div class="flex gap-2 flex-wrap">
+                                    <span
+                                        class="px-2 py-1 rounded-md bg-midnight text-[11px] font-bold text-slate-400 border border-border-dark">postgres_db</span>
+                                    <span
+                                        class="px-2 py-1 rounded-md bg-midnight text-[11px] font-bold text-slate-400 border border-border-dark">backup_runner</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-5 border-t border-border-dark">
+                            <div class="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">database</span>
+                                1.2 GB
+                            </div>
+                            <button
+                                class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline underline-offset-4">
+                                <span class="material-symbols-outlined text-lg">folder_open</span>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="flex flex-col bg-card-dark border border-border-dark rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <span class="material-symbols-outlined">image</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white tracking-tight">web_assets</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                        <span
+                                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Local
+                                            Driver</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="text-slate-600 hover:text-red-500 transition-colors p-1">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mount
+                                    Point</span>
+                                <div
+                                    class="text-xs font-mono bg-midnight p-2.5 rounded border border-border-dark text-slate-300 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    /var/lib/docker/volumes/web_assets/_data
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used
+                                    By</span>
+                                <div class="flex gap-2 flex-wrap">
+                                    <span
+                                        class="px-2 py-1 rounded-md bg-midnight text-[11px] font-bold text-slate-400 border border-border-dark">nginx_proxy</span>
+                                    <span
+                                        class="px-2 py-1 rounded-md bg-midnight text-[11px] font-bold text-slate-400 border border-border-dark">node_app</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-5 border-t border-border-dark">
+                            <div class="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">database</span>
+                                450 MB
+                            </div>
+                            <button
+                                class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline underline-offset-4">
+                                <span class="material-symbols-outlined text-lg">folder_open</span>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="flex flex-col bg-card-dark border border-border-dark rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <span class="material-symbols-outlined">cloud</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white tracking-tight">redis_cache</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="size-1.5 rounded-full bg-blue-500"></span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NFS
+                                            Driver</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="text-slate-600 hover:text-red-500 transition-colors p-1">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mount
+                                    Point</span>
+                                <div
+                                    class="text-xs font-mono bg-midnight p-2.5 rounded border border-border-dark text-slate-300 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    /mnt/nfs/redis_production_cache
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used
+                                    By</span>
+                                <div class="flex gap-2 flex-wrap">
+                                    <span
+                                        class="px-2 py-1 rounded-md bg-midnight text-[11px] font-bold text-slate-400 border border-border-dark">redis_master</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-5 border-t border-border-dark">
+                            <div class="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">database</span>
+                                2.4 GB
+                            </div>
+                            <button
+                                class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline underline-offset-4">
+                                <span class="material-symbols-outlined text-lg">folder_open</span>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="flex flex-col bg-card-dark border border-border-dark rounded-xl overflow-hidden hover:border-primary/40 transition-all">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <span class="material-symbols-outlined">description</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white tracking-tight">logs_volume</h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="size-1.5 rounded-full bg-slate-600"></span>
+                                        <span
+                                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unused</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="text-red-400 hover:text-red-500 transition-colors p-1">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mount
+                                    Point</span>
+                                <div
+                                    class="text-xs font-mono bg-midnight p-2.5 rounded border border-border-dark text-slate-300 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    /var/lib/docker/volumes/logs_volume/_data
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Used
+                                    By</span>
+                                <div class="flex gap-2 flex-wrap">
+                                    <span class="text-[11px] italic text-slate-600">No containers attached</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-5 border-t border-border-dark">
+                            <div class="flex items-center gap-2 text-slate-400 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">database</span>
+                                89 MB
+                            </div>
+                            <button
+                                class="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline underline-offset-4">
+                                <span class="material-symbols-outlined text-lg">folder_open</span>
+                                Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+
+        </main>
+    </div>
+
+</body>
+
+</html>
