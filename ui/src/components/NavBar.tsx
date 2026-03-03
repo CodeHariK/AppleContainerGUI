@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { startSystem, stopSystem } from "../lib/container";
-import { Button } from "@base-ui/react";
+import { IconButton } from "./Button";
+import { Play, StopCircle, Settings } from "lucide-react";
 
 interface NavBarProps {
     systemRunning: boolean;
@@ -53,10 +54,25 @@ export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarPro
 
                 <h2 className="text-lg font-semibold leading-tight tracking-[-0.015em] hidden sm:block">Apple Cider</h2>
 
-                {systemRunning ?
-                    <Button onClick={handleStop}> <span className="text-red-500 material-symbols-outlined text-xl hover:bg-red-900">stop</span></Button>
-                    : <Button onClick={handleStart}><span className="text-green-500 material-symbols-outlined text-xl hover:bg-green-900">play_circle</span></Button>}
-
+                {systemRunning ? (
+                    <IconButton
+                        icon={StopCircle}
+                        onClick={handleStop}
+                        variant="danger"
+                        size="md"
+                        title="Stop System"
+                        className="text-red-500"
+                    />
+                ) : (
+                    <IconButton
+                        icon={Play}
+                        onClick={handleStart}
+                        variant="primary"
+                        size="md"
+                        title="Start System"
+                        className="text-green-500"
+                    />
+                )}
             </div>
 
             {systemRunning && (
@@ -77,9 +93,10 @@ export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarPro
 
                         <Link
                             to="/settings"
-                            className="text-sm leading-normal transition-colors hover:text-primary text-slate-500"
+                            className={`transition-colors hover:text-primary ${location.pathname === '/settings' ? 'text-primary' : 'text-slate-500'}`}
+                            title="Settings"
                         >
-                            <span className={`material-symbols-outlined text-xl ${location.pathname === '/settings' ? 'font-bold text-primary' : 'hover:text-primary text-slate-500'}`}>settings</span>
+                            <Settings size={20} />
                         </Link>
                     </nav>
                 </div>

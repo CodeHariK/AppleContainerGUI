@@ -8,7 +8,7 @@ import RegistriesPage from "./pages/RegistriesPage";
 import SettingsPage from "./pages/SettingsPage";
 
 import { CommandLogProvider } from "./contexts/CommandLogContext";
-import CommandLogOverlay from "./components/CommandLogOverlay";
+import CommandLogOverlay from "./modals/CommandLogOverlay";
 
 function App() {
   return (

@@ -30,6 +30,10 @@ import {
 } from 'lucide-react';
 
 import "../Dashboard.css";
+import { Input } from "./Input";
+import { Button, IconButton } from "./Button";
+import { Card } from "./Card";
+import { PageHeader } from "./PageHeader";
 
 const toastManager = Toast.createToastManager();
 
@@ -158,60 +162,45 @@ function DashboardContent() {
             <NavBar systemRunning={systemRunning} onSystemStop={refreshData} />
 
             <main className="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full">
-                <div className="flex flex-col gap-6 mb-8">
-                    <div className="flex flex-wrap gap-2 items-center text-sm">
-                        <Link className="text-text-secondary hover:text-white transition-colors" to="/">Home</Link>
-                        <span className="text-text-secondary">/</span>
-                        <Link className="text-text-secondary hover:text-white transition-colors" to="/">Projects</Link>
-                        <span className="text-text-secondary">/</span>
-                        <span className="dark:text-white text-slate-900 font-medium">web-app-prod</span>
-                    </div>
-                    <div className="flex flex-row md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex flex-col gap-1">
-                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">Containers</h1>
-                            <p className="text-slate-500 dark:text-text-secondary">Manage your running containers and view real-time resource usage.</p>
-                        </div>
-                        <button className="flex items-center gap-2 h-10 px-4 bg-surface-dark border border-surface-border hover:bg-surface-border text-white text-sm font-bold rounded-lg transition-all">
-                            <Rocket size={18} />
-                            <span>Compose Up</span>
-                        </button>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Containers"
+                    description="Manage your running containers and view real-time resource usage."
+                    icon={Box}
+                    actions={
+                        <Button variant="glass" icon={Rocket} onClick={() => { }}>
+                            Compose Up
+                        </Button>
+                    }
+                />
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
                     <div className="lg:col-span-5">
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-primary transition-colors">
-                                <Search size={18} />
-                            </div>
-                            <input
-                                className="block w-full pl-10 pr-3 py-2.5 bg-white dark:bg-surface-dark border border-slate-600 dark:border-surface-border rounded-lg leading-5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all shadow-sm"
-                                placeholder="Search containers by name, id, or image..."
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                        <Input
+                            icon={Search}
+                            placeholder="Search containers by name, id, or image..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                     <div className="lg:col-span-7 flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 lg:pb-0">
                         {["All", "Running", "Exited", "Healthy"].map((filter) => (
-                            <button
+                            <Button
                                 key={filter}
+                                variant={statusFilter === filter ? "primary" : "glass"}
+                                size="sm"
                                 onClick={() => setStatusFilter(filter)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap text-sm font-medium ${statusFilter === filter
-                                    ? "bg-primary/10 text-primary border-primary/20"
-                                    : "bg-white dark:bg-surface-dark border-slate-600 dark:border-surface-border text-text-secondary hover:text-slate-900 dark:hover:text-white hover:border-slate-500"
-                                    }`}
+                                className="whitespace-nowrap"
                             >
-                                {filter} <span className={`${statusFilter === filter ? "bg-primary" : "bg-slate-200 dark:bg-surface-border"} ${statusFilter === filter ? "text-white" : "text-slate-500 dark:text-text-secondary"} text-xs px-1.5 rounded-md py-0.5`}>
+                                {filter} <span className={`ml-2 text-[10px] px-1.5 rounded-md py-0.5 ${statusFilter === filter ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-surface-border text-slate-500 dark:text-text-secondary"}`}>
                                     {(counters as any)[filter]}
                                 </span>
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-surface-dark border border-slate-600 dark:border-surface-border rounded-xl shadow-sm overflow-hidden">
+                <Card padding="none">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -329,27 +318,15 @@ function DashboardContent() {
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
                                                     <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                                        <Link to={`/container/${container.ID}`} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-surface-border text-slate-500 dark:text-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors" title="Logs">
-                                                            <FileText size={18} />
-                                                        </Link>
-                                                        <Link to={`/container/${container.ID}`} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-surface-border text-slate-500 dark:text-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors" title="Terminal">
-                                                            <TerminalIcon size={18} />
-                                                        </Link>
-                                                        <button onClick={() => handleContainerAction(container.ID, "start")} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-surface-border text-slate-500 dark:text-text-secondary hover:text-orange-400 transition-colors" title="Restart">
-                                                            <RotateCcw size={18} />
-                                                        </button>
+                                                        <IconButton as={Link} to={`/container/${container.ID}`} icon={FileText} variant="ghost" title="Logs" />
+                                                        <IconButton as={Link} to={`/container/${container.ID}`} icon={TerminalIcon} variant="ghost" title="Terminal" />
+                                                        <IconButton icon={RotateCcw} variant="ghost" title="Restart" onClick={() => handleContainerAction(container.ID, "start")} />
                                                         {container.State === "running" ? (
-                                                            <button onClick={() => handleContainerAction(container.ID, "stop")} className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 dark:text-text-secondary hover:text-red-500 transition-colors" title="Stop">
-                                                                <Square size={18} fill="currentColor" />
-                                                            </button>
+                                                            <IconButton icon={Square} variant="danger" title="Stop" onClick={() => handleContainerAction(container.ID, "stop")} />
                                                         ) : (
-                                                            <button onClick={() => handleContainerAction(container.ID, "start")} className="p-1.5 rounded hover:bg-green-500/20 text-slate-500 dark:text-text-secondary hover:text-green-500 transition-colors" title="Start">
-                                                                <Play size={18} fill="currentColor" />
-                                                            </button>
+                                                            <IconButton icon={Play} variant="primary" title="Start" onClick={() => handleContainerAction(container.ID, "start")} />
                                                         )}
-                                                        <button onClick={() => handleContainerAction(container.ID, "remove")} className="p-1.5 rounded hover:bg-red-500/20 text-slate-500 dark:text-text-secondary hover:text-red-500 transition-colors" title="Remove">
-                                                            <Trash2 size={18} />
-                                                        </button>
+                                                        <IconButton icon={Trash2} variant="danger" title="Remove" onClick={() => handleContainerAction(container.ID, "remove")} />
                                                     </div>
                                                 </td>
                                             </tr>
@@ -359,7 +336,7 @@ function DashboardContent() {
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </Card>
             </main>
 
 
@@ -375,10 +352,14 @@ function DashboardContent() {
                             Are you sure you want to remove <strong>{confirmAction?.name}</strong>? This action cannot be undone.
                         </AlertDialog.Description>
                         <div className="dialog-actions">
-                            <AlertDialog.Close className="btn btn-secondary">Cancel</AlertDialog.Close>
-                            <button className="btn btn-danger" onClick={confirmDelete} disabled={actionLoading?.includes("remove")}>
-                                {actionLoading?.includes("remove") ? <RefreshCw size={16} className="spin" /> : "Remove"}
-                            </button>
+                            <Button variant="secondary" onClick={() => setConfirmAction(null)}>Cancel</Button>
+                            <Button
+                                variant="danger"
+                                onClick={confirmDelete}
+                                loading={actionLoading?.includes("remove")}
+                            >
+                                Remove
+                            </Button>
                         </div>
                     </AlertDialog.Popup>
                 </AlertDialog.Portal>

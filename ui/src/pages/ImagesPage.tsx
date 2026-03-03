@@ -6,21 +6,30 @@ import { Select } from '@base-ui/react/select';
 import { Toast } from "@base-ui/react/toast";
 import { toastManager } from "../contexts/CommandLogContext";
 import { NavBar } from "../components/NavBar";
+import "../Dashboard.css";
+import { Button, IconButton } from "../components/Button";
+import { Card } from "../components/Card";
+import { PageHeader } from "../components/PageHeader";
+import { SectionHeader } from "../components/SectionHeader";
 
 import {
-    Trash2,
+    Search,
     RefreshCw,
-    Download,
     Play,
-    Layers,
-    AlertCircle,
-    X,
-    Box,
+    Trash2,
+    Layers2,
+    HardDrive,
     FileCode,
+    X,
+    FolderOpen,
     Save,
-    FileText,
+    Rocket,
+    AlertTriangle,
+    Box,
     ChevronDown,
-    Rocket
+    Download,
+    Filter,
+    FileText
 } from "lucide-react";
 
 import {
@@ -39,8 +48,9 @@ import {
     createContainer
 } from "../lib/container";
 import type { ImageInfo } from "../lib/container";
-import CreateContainerModal from "../components/CreateContainerModal";
-import "../Dashboard.css";
+import { Input } from "../components/Input";
+import CreateContainerModal from "../modals/CreateContainerModal";
+
 
 import * as React from 'react';
 
@@ -101,7 +111,7 @@ export function ConfirmDialog({
                 <Dialog.Popup className="premium-card modal-popup" style={{ maxWidth: '400px', textAlign: 'center' }}>
                     <div className="flex flex-col items-center">
                         {variant === 'danger' && (
-                            <AlertCircle size={40} className="text-red-500 mb-4" />
+                            <AlertTriangle size={40} className="text-red-500 mb-4" />
                         )}
 
                         <Dialog.Title className="text-xl font-semibold mb-2">
@@ -113,20 +123,26 @@ export function ConfirmDialog({
                         </Dialog.Description>
 
                         <div className="flex gap-3 w-full">
-                            <Dialog.Close className="flex-1 px-4 py-2 border border-slate-600 dark:border-surface-border rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-surface-border transition-colors disabled:opacity-50" disabled={isLoading}>
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                disabled={isLoading}
+                                onClick={() => onOpenChange(false)}
+                            >
                                 Cancel
-                            </Dialog.Close>
+                            </Button>
 
-                            <button
-                                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 ${variant === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary-hover'}`}
+                            <Button
+                                variant={variant}
+                                fullWidth
                                 onClick={async () => {
                                     await onConfirm();
                                     onOpenChange(false);
                                 }}
-                                disabled={isLoading}
+                                loading={isLoading}
                             >
-                                {isLoading ? 'Processing...' : confirmLabel}
-                            </button>
+                                {confirmLabel}
+                            </Button>
                         </div>
                     </div>
                 </Dialog.Popup>
@@ -138,7 +154,7 @@ export function ConfirmDialog({
 const MODES = [
     { label: 'Images', value: 'images', icon: <Box size={18} /> },
     { label: 'Dockerfiles', value: 'dockerfiles', icon: <FileCode size={18} /> },
-    { label: 'Compose', value: 'compose', icon: <Layers size={18} /> },
+    { label: 'Compose', value: 'compose', icon: <Layers2 size={18} /> },
 ];
 
 export default function ImagesPage() {
@@ -232,10 +248,16 @@ export default function ImagesPage() {
         <div className="bg-background-light dark:bg-background-dark font-display text-text-primary-light dark:text-text-primary-dark overflow-x-hidden min-h-screen flex flex-col">
             <NavBar systemRunning={systemRunning} onSystemStop={refreshData} />
             <main className="flex-grow w-full max-w-7xl mx-auto px-6 py-8">
-                <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-3xl font-black tracking-tight">Images Management</h2>
+                <PageHeader
+                    title="Images Management"
+                    description={
+                        mode === 'images' ? "Manage your local Docker images, monitor disk usage, and pull new images from registries." :
+                            mode === 'dockerfiles' ? "Build new images directly from local Dockerfiles. Search and discover development environments." :
+                                "Deploy and manage complex multi-container systems using Docker Compose definitions."
+                    }
+                    icon={Layers2}
+                    actions={
+                        <>
                             <Select.Root value={mode} onValueChange={(val) => val && handleModeChange(val)}>
                                 <Select.Trigger className="flex h-10 items-center gap-2 px-3 py-2 bg-white dark:bg-surface-dark border border-slate-600 dark:border-surface-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all hover:border-slate-300">
                                     <Select.Value />
@@ -257,20 +279,10 @@ export default function ImagesPage() {
                                     </Select.Positioner>
                                 </Select.Portal>
                             </Select.Root>
-                        </div>
-                        <p className="text-text-secondary-light dark:text-text-secondary-dark max-w-2xl">
-                            {mode === 'images' && "Manage your local Docker images, monitor disk usage, and pull new images from registries."}
-                            {mode === 'dockerfiles' && "Build new images directly from local Dockerfiles. Search and discover development environments."}
-                            {mode === 'compose' && "Deploy and manage complex multi-container systems using Docker Compose definitions."}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-
-                        <button onClick={() => refreshData()} className="p-2 bg-surface-light dark:bg-surface-dark rounded-lg border border-border-light dark:border-border-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                        </button>
-                    </div>
-                </div>
+                            <IconButton onClick={() => refreshData()} icon={RefreshCw} variant="secondary" loading={isLoading} />
+                        </>
+                    }
+                />
 
                 {!systemRunning ? (
                     <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark p-16 flex flex-col items-center justify-center text-center shadow-sm">
@@ -281,13 +293,13 @@ export default function ImagesPage() {
                 ) : (
                     <div className="flex flex-col gap-8">
                         {/* Dynamic Input Section */}
-                        <section className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-6 shadow-sm overflow-hidden">
+                        <Card className="p-6">
                             {mode === 'images' && (
                                 <div className="flex flex-col gap-4">
-                                    <div className="flex items-center gap-2 mb-2 text-primary">
-                                        <span className="material-symbols-outlined">cloud_download</span>
-                                        <h3 className="text-lg font-bold">Pull New Image</h3>
-                                    </div>
+                                    <SectionHeader
+                                        title="Pull New Image"
+                                        icon={Download}
+                                    />
                                     <div className="flex flex-col lg:flex-row gap-4 items-end">
                                         <label className="flex flex-col gap-2 flex-1 w-full">
                                             <span className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Registry</span>
@@ -302,27 +314,25 @@ export default function ImagesPage() {
                                                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary-light dark:text-text-secondary-dark">expand_more</span>
                                             </div>
                                         </label>
-                                        <label className="flex flex-col gap-2 flex-[2] w-full">
-                                            <span className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Image Name &amp; Tag</span>
-                                            <div className="relative">
-                                                <input
-                                                    className="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg h-12 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary-light dark:text-text-primary-dark placeholder:text-text-secondary-light dark:placeholder:text-text-secondary-dark outline-none transition-all"
-                                                    placeholder="e.g. redis:alpine"
-                                                    type="text"
-                                                    value={pullImageName}
-                                                    onChange={(e) => setPullImageName(e.target.value)}
-                                                />
-                                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary-light dark:text-text-secondary-dark">search</span>
-                                            </div>
-                                        </label>
-                                        <button
+                                        <div className="flex-[2] w-full">
+                                            <Input
+                                                label="Image Name & Tag"
+                                                icon={Search}
+                                                placeholder="e.g. redis:alpine"
+                                                value={pullImageName}
+                                                onChange={(e) => setPullImageName(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button
                                             onClick={() => executeAction("pull-img", () => pullImage(pullImageName))}
-                                            disabled={!pullImageName || !!actionLoading}
-                                            className="h-12 px-8 bg-primary hover:bg-primary-hover text-white font-bold rounded-lg flex items-center gap-2 transition-all w-full lg:w-auto justify-center shadow-lg shadow-primary/20 disabled:opacity-50"
+                                            disabled={!pullImageName}
+                                            loading={actionLoading === "pull-img"}
+                                            icon={Download}
+                                            fullWidth
+                                            className="lg:w-auto"
                                         >
-                                            {actionLoading === "pull-img" ? <RefreshCw className="spin" size={20} /> : <Download size={20} />}
                                             Pull
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
@@ -340,7 +350,7 @@ export default function ImagesPage() {
                                     onRefresh={(path) => setComposeRootDir(path)}
                                 />
                             )}
-                        </section>
+                        </Card>
 
                         {/* Dynamic Info Section */}
                         <section className="flex flex-col gap-4">
@@ -348,22 +358,19 @@ export default function ImagesPage() {
                                 <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                                     {mode === 'images' && <><Box size={22} className="text-primary" /> Local Images</>}
                                     {mode === 'dockerfiles' && <><FileCode size={22} className="text-primary" /> Discovered Dockerfiles</>}
-                                    {mode === 'compose' && <><Layers size={22} className="text-primary" /> Compose Projects</>}
+                                    {mode === 'compose' && <><Layers2 size={22} className="text-primary" /> Compose Projects</>}
                                 </h3>
                                 <div className="flex items-center gap-2">
-                                    <div className="relative">
-                                        <input
-                                            className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-lg h-10 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-primary outline-none transition-all placeholder:text-slate-400 dark:text-white"
+                                    <div className="w-64">
+                                        <Input
+                                            icon={Filter}
                                             placeholder={`Filter ${mode}...`}
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">filter_list</span>
                                     </div>
                                     {mode === 'images' && (
-                                        <button className="h-10 px-3 border border-border-light dark:border-border-dark rounded-lg bg-surface-light dark:bg-surface-dark hover:bg-slate-100 dark:hover:bg-slate-800 text-text-secondary transition-colors" title="Prune unused images">
-                                            <span className="material-symbols-outlined">cleaning_services</span>
-                                        </button>
+                                        <IconButton icon={Layers2} variant="secondary" title="Prune unused images" />
                                     )}
                                 </div>
                             </div>
@@ -431,23 +438,21 @@ export default function ImagesPage() {
                 title="Save Image to Tarball"
             >
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-text-secondary">Destination Path</label>
-                        <input
-                            className="bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary outline-none transition-all"
-                            placeholder="/tmp/myapp.tar"
-                            value={imageToSave?.path || ""}
-                            onChange={(e) => setImageToSave(prev => prev ? { ...prev, path: e.target.value } : null)}
-                        />
-                    </div>
+                    <Input
+                        label="Destination Path"
+                        icon={HardDrive}
+                        placeholder="/tmp/myapp.tar"
+                        value={imageToSave?.path || ""}
+                        onChange={(e) => setImageToSave(prev => prev ? { ...prev, path: e.target.value } : null)}
+                    />
                     <div className="flex gap-3 mt-2">
-                        <button className="flex-1 py-3 border border-border-light dark:border-border-dark rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => setImageToSave(null)}>Cancel</button>
-                        <button className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-violet-900/20 transition-all" onClick={async () => {
+                        <Button variant="secondary" fullWidth onClick={() => setImageToSave(null)}>Cancel</Button>
+                        <Button variant="primary" fullWidth onClick={async () => {
                             if (imageToSave) {
                                 await executeAction("save-img", () => saveImage(imageToSave.repository, imageToSave.path));
                                 setImageToSave(null);
                             }
-                        }}>Save Image</button>
+                        }}>Save Image</Button>
                     </div>
                 </div>
             </Modal>
@@ -458,32 +463,28 @@ export default function ImagesPage() {
                 title="Build New Image"
             >
                 <div className="flex flex-col gap-6">
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-text-secondary px-1">Target Tag</label>
-                        <div className="relative">
-                            <input
-                                className="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl h-12 px-4 focus:ring-2 focus:ring-primary outline-none transition-all font-mono text-sm"
-                                placeholder="e.g. my-app:v1.0"
-                                value={dockerfileToBuild?.tag || ""}
-                                onChange={(e) => setDockerfileToBuild(prev => prev ? { ...prev, tag: e.target.value } : null)}
-                            />
-                        </div>
-                        <p className="text-[11px] text-text-secondary px-1 mt-1 flex items-center gap-1">
-                            <AlertCircle size={10} /> The tag must be lowercase and follow docker naming conventions.
-                        </p>
-                    </div>
+                    <Input
+                        label="Target Tag"
+                        icon={Rocket}
+                        placeholder="e.g. my-app:v1.0"
+                        value={dockerfileToBuild?.tag || ""}
+                        onChange={(e) => setDockerfileToBuild(prev => prev ? { ...prev, tag: e.target.value } : null)}
+                        className="font-mono text-sm"
+                    />
+                    <p className="text-[11px] text-text-secondary px-1 mt-1 flex items-center gap-1">
+                        <AlertTriangle size={10} /> The tag must be lowercase and follow docker naming conventions.
+                    </p>
                     <div className="flex gap-3">
-                        <button className="flex-1 py-3 border border-border-light dark:border-border-dark rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={() => setDockerfileToBuild(null)}>Cancel</button>
-                        <button className="flex-1 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-lg shadow-violet-900/20 transition-all flex items-center justify-center gap-2" onClick={async () => {
+                        <Button variant="secondary" fullWidth onClick={() => setDockerfileToBuild(null)}>Cancel</Button>
+                        <Button variant="primary" fullWidth icon={Rocket} onClick={async () => {
                             if (dockerfileToBuild) {
                                 const dir = dockerfileToBuild.path.substring(0, dockerfileToBuild.path.lastIndexOf('/'));
                                 await executeAction("build-df", () => buildImage(`container build -t ${dockerfileToBuild.tag} -f ${dockerfileToBuild.path} ${dir}`));
                                 setDockerfileToBuild(null);
                             }
                         }}>
-                            <Rocket size={18} />
                             Start Build
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </Modal>
@@ -513,7 +514,7 @@ export default function ImagesPage() {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
             `}</style>
-        </div>
+        </div >
     );
 }
 
@@ -583,15 +584,9 @@ function ImagesTable({ images, onPlay, onDelete, onSave }: any) {
                                 {img.CreatedAt || "Unknown"}
                             </div>
                             <div className="md:col-span-1 flex justify-end gap-1">
-                                <button onClick={() => onPlay(img.Repository + ":" + img.Tag)} className="p-2 text-green-500 hover:bg-green-500/10 rounded-lg transition-colors" title="Run Container">
-                                    <Play size={18} />
-                                </button>
-                                <button onClick={() => onSave(img.Repository)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Save Image">
-                                    <Save size={18} />
-                                </button>
-                                <button onClick={() => onDelete(img.Repository + ":" + img.Tag)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete Image">
-                                    <Trash2 size={18} />
-                                </button>
+                                <IconButton onClick={() => onPlay(img.Repository + ":" + img.Tag)} icon={Play} variant="ghost" title="Run Container" />
+                                <IconButton onClick={() => onSave(img.Repository)} icon={Save} variant="ghost" title="Save Image" />
+                                <IconButton onClick={() => onDelete(img.Repository + ":" + img.Tag)} icon={Trash2} variant="dangerGhost" title="Delete Image" />
                             </div>
                         </div>
                     );
@@ -607,30 +602,27 @@ function DockerfilesInput({ onScan, initialValue }: { onScan: (path: string) => 
         <div className="flex flex-col lg:flex-row gap-6 items-end">
             <div className="flex flex-col gap-2 flex-grow w-full">
                 <div className="flex items-center gap-2 mb-1 text-primary">
-                    <span className="material-symbols-outlined">file_search</span>
                     <h3 className="text-lg font-bold">Discover Dockerfiles</h3>
                 </div>
                 <div className="flex flex-col gap-2 w-full">
-                    <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Search Directory</span>
-                    <div className="relative">
-                        <input
-                            className="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg h-12 pl-11 pr-4 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
-                            placeholder="e.g. /home/projects (leave empty for current)"
-                            value={path}
-                            onChange={(e) => setPath(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && onScan(path)}
-                        />
-                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">search</span>
-                    </div>
+                    <Input
+                        label="Search Directory"
+                        icon={FolderOpen}
+                        placeholder="e.g. /home/projects (leave empty for current)"
+                        value={path}
+                        onChange={(e) => setPath(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && onScan(path)}
+                    />
                 </div>
             </div>
-            <button
+            <Button
                 onClick={() => onScan(path)}
-                className="h-12 px-8 bg-primary hover:bg-primary-hover text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-primary/20 w-full lg:w-auto justify-center"
+                icon={RefreshCw}
+                fullWidth
+                className="lg:w-auto"
             >
-                <RefreshCw size={20} />
                 Scan Now
-            </button>
+            </Button>
         </div>
     );
 }
@@ -696,12 +688,12 @@ function DockerfilesTable({ query, onBuild, searchPath }: { query: string, onBui
                                 </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                <button
+                                <Button
                                     onClick={() => onBuild(df.path)}
-                                    className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                    size="sm"
                                 >
                                     Build Image
-                                </button>
+                                </Button>
                             </td>
                         </tr>
                     ))}
@@ -737,26 +729,25 @@ function ComposeInput({ onRefresh, initialValue }: { onRefresh: (path: string) =
                     <h3 className="text-lg font-bold">Discover Projects</h3>
                 </div>
                 <div className="flex flex-col gap-2 w-full">
-                    <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Project Root</span>
-                    <div className="relative">
-                        <input
-                            className="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg h-12 pl-11 pr-4 focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
-                            placeholder="e.g. /Users/dev/my-stack"
-                            value={path}
-                            onChange={(e) => setPath(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && onRefresh(path)}
-                        />
-                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">search</span>
-                    </div>
+                    <Input
+                        label="Project Root"
+                        icon={FolderOpen}
+                        placeholder="e.g. /Users/dev/my-stack"
+                        value={path}
+                        onChange={(e) => setPath(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && onRefresh(path)}
+                    />
                 </div>
             </div>
-            <button
+            <Button
                 onClick={() => onRefresh(path)}
-                className="h-12 px-8 border border-border-light dark:border-border-dark rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors w-full lg:w-auto justify-center"
+                variant="secondary"
+                icon={RefreshCw}
+                fullWidth
+                className="lg:w-auto"
             >
-                <RefreshCw size={20} />
                 Refresh
-            </button>
+            </Button>
         </div>
     );
 }
@@ -799,7 +790,7 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
     if (filtered.length === 0 && !selectedComposeFile) {
         return (
             <div className="p-20 flex flex-col items-center justify-center text-center opacity-50">
-                <Layers size={48} className="mb-4" />
+                <Layers2 size={48} className="mb-4" />
                 <p className="text-sm font-medium">No Compose projects discovered.</p>
             </div>
         );
@@ -837,11 +828,28 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
                                 <p className="text-sm text-text-secondary font-mono mt-1 opacity-70">{selectedComposeFile}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={() => setShowSudoModal(true)} className="px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-600 dark:border-surface-border">DNS Setup</button>
-                                <button onClick={() => setShowTearDownConfirm(true)} className="px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors border border-red-500/20">Tear Down</button>
-                                <button onClick={() => composeUp(selectedComposeFile, projectName)} className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg shadow-lg shadow-violet-900/10 transition-colors flex items-center gap-2">
-                                    <Rocket size={16} /> Deploy All
-                                </button>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setShowSudoModal(true)}
+                                >
+                                    DNS Setup
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => setShowTearDownConfirm(true)}
+                                >
+                                    Tear Down
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    icon={Rocket}
+                                    onClick={() => composeUp(selectedComposeFile, projectName)}
+                                >
+                                    Deploy All
+                                </Button>
                             </div>
                         </div>
 
@@ -849,7 +857,7 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
                             {Object.entries(parsedComposeData?.services || {}).map(([name, svc]: [string, any]) => (
                                 <div key={name} className="p-4 bg-white dark:bg-background-dark border border-slate-600 dark:border-surface-border rounded-xl shadow-sm hover:border-primary/40 transition-colors">
                                     <div className="flex items-center gap-2 font-bold text-primary mb-1 text-primary">
-                                        <Box size={16} />
+                                        <Layers2 size={16} />
                                         {name}
                                     </div>
                                     <p className="text-xs text-text-secondary truncate">{svc.image || 'Custom Build'}</p>
@@ -868,7 +876,7 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
                     </div>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center opacity-25 text-center p-12">
-                        <Layers size={64} className="mb-4" />
+                        <Layers2 size={64} className="mb-4" />
                         <h3 className="text-lg font-bold">Project Details</h3>
                         <p className="text-sm">Select a compose file to view services and configuration.</p>
                     </div>
@@ -882,13 +890,21 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
                     </p>
                     <div className="bg-black/90 p-4 rounded-xl font-mono text-sm text-primary border border-primary/20 flex items-center justify-between group">
                         <code>sudo container system dns create {projectName}</code>
-                        <button className="text-primary hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            <RefreshCw size={14} />
-                        </button>
+                        <IconButton
+                            icon={RefreshCw}
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100"
+                        />
                     </div>
-                    <button className="mt-2 w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-all" onClick={() => setShowSudoModal(false)}>
+                    <Button
+                        variant="primary"
+                        fullWidth
+                        className="mt-2"
+                        onClick={() => setShowSudoModal(false)}
+                    >
                         I've configured it
-                    </button>
+                    </Button>
                 </div>
             </Modal>
 

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-
 import {
     Database,
     Trash2,
@@ -8,8 +7,7 @@ import {
     HardDrive,
     Image as ImageIcon,
     Cloud,
-    FileText,
-    FolderOpen
+    FileText
 } from "lucide-react";
 import {
     listVolumes,
@@ -20,8 +18,12 @@ import {
 import type {
     VolumeInfo
 } from "../lib/container";
-import CreateVolumeModal from "../components/CreateVolumeModal";
+import CreateVolumeModal from "../modals/CreateVolumeModal";
 import { NavBar } from "../components/NavBar";
+import "../Dashboard.css";
+import { Button, IconButton } from "../components/Button";
+import { Card } from "../components/Card";
+import { PageHeader } from "../components/PageHeader";
 
 export default function VolumesPage() {
     const [volumes, setVolumes] = useState<VolumeInfo[]>([]);
@@ -29,7 +31,6 @@ export default function VolumesPage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [systemRunning, setSystemRunning] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const searchQuery = ""; // Kept for filteredVolumes logic
 
     const refreshData = async () => {
         setIsLoading(true);
@@ -90,12 +91,6 @@ export default function VolumesPage() {
         return <Database size={24} />;
     };
 
-    const getVolumeColor = (vol: VolumeInfo) => {
-        if (vol.driver === 'local') return 'bg-emerald-500';
-        if (vol.driver === 'nfs') return 'bg-blue-500';
-        return 'bg-slate-600';
-    };
-
     const totalStorageBytes = useMemo(() => {
         return volumes.reduce((acc, vol) => acc + (vol.sizeInBytes || 0), 0);
     }, [volumes]);
@@ -106,154 +101,145 @@ export default function VolumesPage() {
     }, [volumes]);
 
     const unusedVolumesCount = useMemo(() => {
-        // We lack direct container usage info in VolumeInfo currently 
-        // We can simulate or wait for proper API (currently assuming sizes > 0 implies used for demo purposes, 
-        // or just hardcoded 0 if we don't know). For realism based on the UI request:
-        // Docker API doesn't return usage by default without querying containers. 
-        // We will just do a mock or return '?' if we can't be sure, but let's default to something reasonable.
         return volumes.filter(v => (v.sizeInBytes || 0) === 0).length;
     }, [volumes]);
-
-    const filteredVolumes = volumes.filter(v => v.name.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const formatSize = (bytes: number) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
 
     const formatStorageGB = (bytes: number) => {
         return parseFloat((bytes / (1024 * 1024 * 1024)).toFixed(2));
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark font-sans antialiased animate-fade-in">
+        <div className="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
             <NavBar systemRunning={systemRunning} onSystemStop={refreshData} />
 
-            <main className="flex-1 max-w-[1600px] mx-auto w-full px-8 py-10">
+            <main className="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full animate-fade-in font-display">
+                <PageHeader
+                    title="Volume Management"
+                    description="Persistent storage buckets for stateful container persistence."
+                    icon={Database}
+                    actions={
+                        <Button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            disabled={!systemRunning}
+                            icon={Plus}
+                        >
+                            Create Volume
+                        </Button>
+                    }
+                />
+
                 {!systemRunning ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+                    <Card className="flex flex-col items-center justify-center py-20">
                         <Database size={64} className="text-slate-400 dark:text-slate-600 mb-6 opacity-50" />
-                        <h2 className="text-2xl font-black tracking-tight text-text-primary-light dark:text-text-primary-dark mb-2">Daemon Offline</h2>
-                        <p className="text-text-secondary-light dark:text-text-secondary-dark font-medium">Please start the Docker system to manage volumes.</p>
-                        <button onClick={refreshData} className="mt-6 flex items-center gap-2 rounded-lg px-5 py-2 bg-primary text-white font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/10">
-                            <RefreshCw size={16} className={isLoading ? "spin" : ""} /> Retry Connection
-                        </button>
-                    </div>
+                        <h2 className="text-2xl font-black tracking-tight mb-2 uppercase">Daemon Offline</h2>
+                        <p className="text-text-secondary font-medium">Please start the system to manage volumes.</p>
+                        <Button
+                            onClick={refreshData}
+                            loading={isLoading}
+                            icon={RefreshCw}
+                            className="mt-6"
+                        >
+                            Retry Connection
+                        </Button>
+                    </Card>
                 ) : (
                     <>
-                        <div className="flex flex-wrap justify-between items-center gap-4 mb-10">
-                            <div className="flex flex-col gap-1">
-                                <h1 className="text-3xl font-black tracking-tight text-text-primary-light dark:text-text-primary-dark">Volumes Management</h1>
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium">{volumes.length} active volumes across {activeDriversCount} storage drivers</p>
-                            </div>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={refreshData}
-                                    className="flex items-center gap-2 rounded-lg px-4 py-2 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-secondary-light dark:text-text-secondary-dark font-semibold text-sm hover:opacity-80 transition-all">
-                                    <RefreshCw size={18} className={isLoading ? "spin" : ""} />
-                                    Refresh
-                                </button>
-                                <button
-                                    onClick={() => setIsCreateModalOpen(true)}
-                                    className="flex items-center gap-2 rounded-lg px-5 py-2 bg-primary text-white font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-primary/10">
-                                    <Plus size={18} />
-                                    Create Volume
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                            <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-[10px] font-bold uppercase tracking-[0.2em]">Total Storage</p>
-                                <p className="text-3xl font-black mt-2 text-text-primary-light dark:text-text-primary-dark">
-                                    {totalStorageBytes > 0 ? formatStorageGB(totalStorageBytes) : "0"} <span className="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark uppercase">GB</span>
-                                </p>
-                            </div>
-                            <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-[10px] font-bold uppercase tracking-[0.2em]">Active Drivers</p>
-                                <p className="text-3xl font-black mt-2 text-text-primary-light dark:text-text-primary-dark">{activeDriversCount}</p>
-                            </div>
-                            <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-[10px] font-bold uppercase tracking-[0.2em]">Unused Volumes</p>
-                                <p className="text-3xl font-black mt-2 text-amber-500">{unusedVolumesCount}</p>
-                            </div>
-                            <div className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-primary/20 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-1 h-full bg-primary"></div>
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-[10px] font-bold uppercase tracking-[0.2em]">Health Status</p>
-                                <p className="text-3xl font-black mt-2 text-emerald-500">Optimal</p>
-                            </div>
-                        </div>
-
-                        {filteredVolumes.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm">
-                                <Database size={64} className="text-slate-400 dark:text-slate-600 mb-6 opacity-50" />
-                                <h2 className="text-xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark mb-2">No volumes found</h2>
-                                <p className="text-text-secondary-light dark:text-text-secondary-dark font-medium">Create a new volume to persist your container data.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredVolumes.map(vol => (
-                                    <div key={vol.name} className="flex flex-col bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl overflow-hidden hover:border-primary/40 transition-all">
-                                        <div className="p-6">
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                                                        {getVolumeIcon(vol)}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-lg font-bold text-text-primary-light dark:text-text-primary-dark tracking-tight break-all">{vol.name}</h3>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`size-1.5 rounded-full ${getVolumeColor(vol)}`}></span>
-                                                            <span className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">{vol.driver} Driver</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {actionLoading === "delete-" + vol.name ? (
-                                                    <div className="p-1">
-                                                        <RefreshCw size={20} className="text-slate-400 dark:text-slate-500 spin" />
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => handleDelete(vol.name)} className="text-slate-400 dark:text-slate-600 hover:text-red-500 transition-colors p-1" title="Delete Volume">
-                                                        <Trash2 size={20} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <div className="space-y-4 mb-6">
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Mount Point</span>
-                                                    <div className="text-xs font-mono bg-background-light dark:bg-background-dark p-2.5 rounded border border-border-light dark:border-border-dark text-text-secondary-light dark:text-text-secondary-dark overflow-hidden text-ellipsis whitespace-nowrap" title={vol.source}>
-                                                        {vol.source || "N/A"}
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Used By</span>
-                                                    <div className="flex gap-2 flex-wrap">
-                                                        {(vol.sizeInBytes || 0) > 0 ? (
-                                                            <span className="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark text-[11px] font-bold text-text-secondary-light dark:text-text-secondary-dark border border-border-light dark:border-border-dark">1+ Containers</span>
-                                                        ) : (
-                                                            <span className="text-[11px] italic text-slate-400 dark:text-slate-600">Unused</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between pt-5 border-t border-border-light dark:border-border-dark">
-                                                <div className="flex items-center gap-2 text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium">
-                                                    <Database size={18} />
-                                                    {vol.sizeInBytes !== undefined ? formatSize(vol.sizeInBytes) : '-'}
-                                                </div>
-                                                <button className="flex items-center gap-1.5 text-primary font-bold text-sm hover:underline underline-offset-4 pointer-events-none opacity-50">
-                                                    <FolderOpen size={18} />
-                                                    Browse
-                                                </button>
-                                            </div>
-                                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                            <Card className="flex items-center gap-5 p-6 group">
+                                <div className="p-4 bg-primary/10 rounded-2xl text-primary group-hover:scale-110 transition-transform">
+                                    <HardDrive size={32} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Total Allocated</p>
+                                    <div className="flex items-end gap-1.5">
+                                        <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                                            {formatStorageGB(totalStorageBytes)}
+                                        </h4>
+                                        <span className="text-sm font-bold text-text-secondary pb-0.5">GB</span>
                                     </div>
-                                ))}
+                                </div>
+                            </Card>
+
+                            <Card className="flex items-center gap-5 p-6 group">
+                                <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform">
+                                    <RefreshCw size={32} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Active Drivers</p>
+                                    <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                                        {activeDriversCount}
+                                    </h4>
+                                </div>
+                            </Card>
+
+                            <Card className="flex items-center gap-5 p-6 group">
+                                <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
+                                    <Trash2 size={32} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Unused Volumes</p>
+                                    <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                                        {unusedVolumesCount}
+                                    </h4>
+                                </div>
+                            </Card>
+                        </div>
+
+                        <Card className="p-0 overflow-hidden">
+                            <div className="overflow-x-auto custom-scrollbar">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-600 dark:border-surface-border">
+                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Volume Identity</th>
+                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Driver</th>
+                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Mount Source</th>
+                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-600 dark:divide-surface-border">
+                                        {volumes.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="py-12 text-center text-text-secondary italic">No storage volumes detected</td>
+                                            </tr>
+                                        ) : (
+                                            volumes.map((vol) => (
+                                                <tr key={vol.name} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-slate-100 dark:bg-white/10 rounded text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">
+                                                                {getVolumeIcon(vol)}
+                                                            </div>
+                                                            <span className="font-bold text-slate-900 dark:text-white">{vol.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/10 text-[10px] uppercase font-black text-text-secondary tracking-widest">
+                                                            {vol.driver}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-mono text-text-secondary truncate max-w-[300px]" title={vol.source}>
+                                                                {vol.source}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-right">
+                                                        <IconButton
+                                                            variant="ghost"
+                                                            icon={Trash2}
+                                                            title="Delete Volume"
+                                                            loading={actionLoading === "delete-" + vol.name}
+                                                            onClick={() => handleDelete(vol.name)}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
+                        </Card>
                     </>
                 )}
             </main>
@@ -268,4 +254,3 @@ export default function VolumesPage() {
         </div>
     );
 }
-

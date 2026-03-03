@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
+// ComposeFile represents the structure of a Docker Compose file.
 type ComposeFile struct {
 	Version  string                    `yaml:"version" json:"version"`
 	Services map[string]ComposeService `yaml:"services" json:"services"`
@@ -19,6 +20,7 @@ type ComposeFile struct {
 	Volumes  map[string]interface{}    `yaml:"volumes" json:"volumes"`
 }
 
+// ComposeService defines a service within a Docker Compose file.
 type ComposeService struct {
 	Image         string      `yaml:"image" json:"image"`
 	Build         interface{} `yaml:"build" json:"build"` // string context or struct
@@ -39,12 +41,14 @@ type ComposeService struct {
 	Init          bool        `yaml:"init" json:"init"`
 }
 
+// BuildInfo contains build configuration for a service.
 type BuildInfo struct {
 	Context    string            `yaml:"context" json:"context"`
 	Dockerfile string            `yaml:"dockerfile" json:"dockerfile"`
 	Args       map[string]string `yaml:"args" json:"args"`
 }
 
+// CliContainer represents container information returned by the CLI.
 type CliContainer struct {
 	Configuration struct {
 		ID     string            `json:"id"`
@@ -57,6 +61,7 @@ type CliContainer struct {
 	StartedDate float64 `json:"startedDate"`
 }
 
+// parseComposeFile parses a YAML compose file into a ComposeFile struct.
 func parseComposeFile(path string) (*ComposeFile, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -71,6 +76,7 @@ func parseComposeFile(path string) (*ComposeFile, error) {
 	return &cf, nil
 }
 
+// getSortedServices returns service names sorted by their dependencies.
 func (cf *ComposeFile) getSortedServices() ([]string, error) {
 	visited := make(map[string]bool)
 	temp := make(map[string]bool)
@@ -111,24 +117,25 @@ func (cf *ComposeFile) getSortedServices() ([]string, error) {
 	return result, nil
 }
 
-func (cf *ComposeFile) composeUp(projectDir string, projectName string) error {
+// composeUp deploys all services defined in the compose file.
+func (a *App) composeUp(cf *ComposeFile, projectDir string, projectName string) error {
 	// 1. Create networks
 	// Always create a default network for the project if not explicitly defined with others
 	defaultNet := fmt.Sprintf("%s-default", projectName)
 	log.Printf("[Compose] Ensuring default network: %s", defaultNet)
-	exec.Command("container", "network", "create", defaultNet).Run()
+	a.runCli("network", "create", defaultNet)
 
 	for netName := range cf.Networks {
 		fullNetName := fmt.Sprintf("%s-%s", projectName, netName)
 		log.Printf("[Compose] Creating network: %s", fullNetName)
-		exec.Command("container", "network", "create", fullNetName).Run()
+		a.runCli("network", "create", fullNetName)
 	}
 
 	// 2. Create volumes
 	for volName := range cf.Volumes {
 		fullVolName := fmt.Sprintf("%s-%s", projectName, volName)
 		log.Printf("[Compose] Creating volume: %s", fullVolName)
-		exec.Command("container", "volume", "create", fullVolName).Run()
+		a.runCli("volume", "create", fullVolName)
 	}
 
 	// 3. Sort services
@@ -139,7 +146,7 @@ func (cf *ComposeFile) composeUp(projectDir string, projectName string) error {
 
 	// 4. Launch in order
 	for _, name := range sorted {
-		if err := cf.launchService(name, cf.Services[name], projectDir, projectName); err != nil {
+		if err := a.launchService(name, cf.Services[name], projectDir, projectName); err != nil {
 			return err
 		}
 	}
@@ -147,75 +154,84 @@ func (cf *ComposeFile) composeUp(projectDir string, projectName string) error {
 	return nil
 }
 
-func (cf *ComposeFile) launchService(name string, service ComposeService, projectDir string, projectName string) error {
+// launchService builds the image (if needed) and runs a specific service container.
+func (a *App) launchService(name string, service ComposeService, projectDir string, projectName string) error {
 	imageName := service.Image
-	if imageName == "" {
-		imageName = fmt.Sprintf("%s-%s", projectName, name)
-	}
-
-	// Handle build if specified
 	if service.Build != nil {
-		context := "."
-		dockerfile := "Dockerfile"
-
-		switch b := service.Build.(type) {
-		case string:
-			context = b
-		case map[string]interface{}:
-			if c, ok := b["context"].(string); ok {
-				context = c
-			}
-			if d, ok := b["dockerfile"].(string); ok {
-				dockerfile = d
-			}
-		case BuildInfo: // If we use BuildInfo struct
-			context = b.Context
-			dockerfile = b.Dockerfile
+		// Handle build
+		var buildInfo BuildInfo
+		data, _ := yaml.Marshal(service.Build)
+		if err := yaml.Unmarshal(data, &buildInfo); err == nil && buildInfo.Context != "" {
+			// complex build info
+		} else {
+			// simple build string
+			var context string
+			yaml.Unmarshal(data, &context)
+			buildInfo = BuildInfo{Context: context}
 		}
 
-		absContext := context
-		if !filepath.IsAbs(context) {
-			absContext = filepath.Join(projectDir, context)
+		if buildInfo.Dockerfile == "" {
+			buildInfo.Dockerfile = "Dockerfile"
 		}
 
-		absDockerfile := dockerfile
-		if !filepath.IsAbs(dockerfile) {
-			absDockerfile = filepath.Join(absContext, dockerfile)
+		absContext := filepath.Join(projectDir, buildInfo.Context)
+		absDockerfile := filepath.Join(absContext, buildInfo.Dockerfile)
+
+		if imageName == "" {
+			imageName = fmt.Sprintf("%s-%s:latest", projectName, name)
 		}
 
-		log.Printf("[Compose] Building image for %s: %s (Context: %s, Dockerfile: %s)", name, imageName, absContext, absDockerfile)
-		// We use CombinedOutput to capture errors for better reporting
-		cmd := exec.Command("container", "build", "-t", imageName, "-f", absDockerfile, absContext)
-		cmd.Dir = absContext
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("failed to build image %s: %s: %w", imageName, string(out), err)
+		log.Printf("[Compose] Building service %s: %s", name, imageName)
+		output, err := a.runCli("build", "-t", imageName, "-f", absDockerfile, absContext)
+		if err != nil {
+			return fmt.Errorf("build failed: %v\n%s", err, string(output))
 		}
 	}
 
-	// Construct run arguments
-	args := []string{"run", "-d"}
+	// Run container
+	containerName := fmt.Sprintf("%s-%s", projectName, name)
+	log.Printf("[Compose] Launching service %s as %s", name, containerName)
 
-	// Labels for tracking
-	args = append(args, "-l", fmt.Sprintf("cider.compose.project=%s", projectName))
-	args = append(args, "-l", fmt.Sprintf("cider.compose.service=%s", name))
+	args := []string{"run", "-d", "--name", containerName}
 
-	// Container name and Hostname
-	containerName := service.ContainerName
-	if containerName == "" {
-		containerName = fmt.Sprintf("%s-%s", projectName, name)
+	// Add labels
+	args = append(args, "--label", fmt.Sprintf("com.apple.container.project=%s", projectName))
+	args = append(args, "--label", fmt.Sprintf("com.apple.container.service=%s", name))
+
+	// Networks
+	if len(service.Networks) > 0 {
+		for _, net := range service.Networks {
+			fullNetName := fmt.Sprintf("%s-%s", projectName, net)
+			args = append(args, "--net", fullNetName)
+		}
+	} else {
+		// Use default net
+		defaultNet := fmt.Sprintf("%s-default", projectName)
+		args = append(args, "--net", defaultNet)
 	}
-	args = append(args, "--name", containerName)
-
-	// DNS Discovery
-	args = append(args, "--dns-search", projectName)
-	args = append(args, "--dns-domain", projectName)
 
 	// Ports
 	for _, p := range service.Ports {
 		args = append(args, "-p", p)
 	}
 
-	// Environment
+	// Volumes
+	for _, v := range service.Volumes {
+		parts := strings.Split(v, ":")
+		if len(parts) >= 2 {
+			// Check if host side is a project volume name
+			volName := parts[0]
+			fullVolName := fmt.Sprintf("%s-%s", projectName, volName)
+			// Logic to check if volName is in cf.Volumes would be good, but we'll assume for now
+			// or just use the name as is if it exists.
+			// CLI will fail if volume doesn't exist and isn't a path.
+			args = append(args, "-v", fmt.Sprintf("%s:%s", fullVolName, parts[1]))
+		} else {
+			args = append(args, "-v", v)
+		}
+	}
+
+	// Env
 	if service.Environment != nil {
 		switch env := service.Environment.(type) {
 		case map[string]interface{}:
@@ -229,72 +245,7 @@ func (cf *ComposeFile) launchService(name string, service ComposeService, projec
 		}
 	}
 
-	// Env File
-	if service.EnvFile != nil {
-		switch ef := service.EnvFile.(type) {
-		case string:
-			args = append(args, "--env-file", filepath.Join(projectDir, ef))
-		case []interface{}:
-			for _, v := range ef {
-				args = append(args, "--env-file", filepath.Join(projectDir, fmt.Sprintf("%v", v)))
-			}
-		}
-	}
-
-	// Volumes
-	for _, v := range service.Volumes {
-		parts := strings.Split(v, ":")
-		if len(parts) >= 2 {
-			hostPath := parts[0]
-			if !filepath.IsAbs(hostPath) {
-				hostPath = filepath.Join(projectDir, hostPath)
-			}
-			args = append(args, "-v", fmt.Sprintf("%s:%s", hostPath, parts[1]))
-		}
-	}
-
-	// Networks
-	if len(service.Networks) > 0 {
-		for _, net := range service.Networks {
-			fullNetName := fmt.Sprintf("%s-%s", projectName, net)
-			args = append(args, "--network", fullNetName)
-		}
-	} else {
-		// Use project default network
-		args = append(args, "--network", fmt.Sprintf("%s-default", projectName))
-	}
-
-	// Resources
-	if service.CPUs != "" {
-		args = append(args, "-c", service.CPUs)
-	}
-	if service.MemLimit != "" {
-		args = append(args, "-m", service.MemLimit)
-	}
-
-	// DNS
-	if service.DNS != nil {
-		switch d := service.DNS.(type) {
-		case string:
-			args = append(args, "--dns", d)
-		case []interface{}:
-			for _, v := range d {
-				args = append(args, "--dns", fmt.Sprintf("%v", v))
-			}
-		}
-	}
-
-	// Flags
-	if service.ReadOnly {
-		args = append(args, "--read-only")
-	}
-	if service.Init {
-		args = append(args, "--init")
-	}
-
-	// Image and Command
-	args = append(args, imageName)
-
+	// Command
 	if service.Command != nil {
 		switch cmd := service.Command.(type) {
 		case string:
@@ -306,18 +257,30 @@ func (cf *ComposeFile) launchService(name string, service ComposeService, projec
 		}
 	}
 
-	log.Printf("[Compose] Starting service %s: %s", name, strings.Join(args, " "))
-	cmd := exec.Command("container", args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to start service %s: %s: %w", name, string(out), err)
+	args = append(args, imageName)
+
+	output, err := a.runCli(args...)
+	if err != nil {
+		// If name already exists, maybe try to stop/rm it?
+		if strings.Contains(string(output), "already in use") {
+			log.Printf("[Compose] Container %s exists, recreating...", containerName)
+			a.runCli("stop", containerName)
+			a.runCli("rm", containerName)
+			output, err = a.runCli(args...)
+		}
+
+		if err != nil {
+			return fmt.Errorf("run failed: %v\n%s", err, string(output))
+		}
 	}
 
 	return nil
 }
 
-func composeDown(projectName string) error {
-	// Find all containers with project label
-	out, err := exec.Command("container", "list", "--all", "--format", "json").Output()
+// composeDown stops and removes all containers belonging to a compose project.
+func (a *App) composeDown(projectName string) error {
+	// 1. Find containers with label project=projectName
+	out, err := a.runCli("list", "--all", "--format", "json")
 	if err != nil {
 		return err
 	}
@@ -328,40 +291,167 @@ func composeDown(projectName string) error {
 	}
 
 	for _, c := range containers {
-		if c.Configuration.Labels["cider.compose.project"] == projectName {
+		if c.Configuration.Labels["com.apple.container.project"] == projectName {
 			log.Printf("[Compose] Stopping and removing container: %s", c.Configuration.ID)
-			exec.Command("container", "stop", c.Configuration.ID).Run()
-			exec.Command("container", "delete", c.Configuration.ID).Run()
+			a.runCli("stop", c.Configuration.ID)
+			a.runCli("delete", c.Configuration.ID)
 		}
 	}
 
-	// Delete networks
-	// Note: We don't have a direct list of created nets in Down without the YAML,
-	// but we can prune or use the naming convention
-	// For now, let's at least try to remove the default one
+	// 2. Remove default network
 	defaultNet := fmt.Sprintf("%s-default", projectName)
-	log.Printf("[Compose] Removing default network: %s", defaultNet)
-	exec.Command("container", "network", "delete", defaultNet).Run()
+	a.runCli("network", "delete", defaultNet)
 
 	return nil
 }
 
-func composeStatus(projectName string) ([]CliContainer, error) {
-	out, err := exec.Command("container", "list", "--all", "--format", "json").Output()
+// composeStatus retrieves the status of all containers in a compose project.
+func (a *App) composeStatus(projectName string) ([]CliContainer, error) {
+	out, err := a.runCli("list", "--all", "--format", "json")
 	if err != nil {
 		return nil, err
 	}
 
-	var all []CliContainer
-	if err := json.Unmarshal(out, &all); err != nil {
+	var containers []CliContainer
+	if err := json.Unmarshal(out, &containers); err != nil {
 		return nil, err
 	}
 
-	var project []CliContainer
-	for _, c := range all {
-		if c.Configuration.Labels["cider.compose.project"] == projectName {
-			project = append(project, c)
+	var projectContainers []CliContainer
+	for _, c := range containers {
+		if c.Configuration.Labels["com.apple.container.project"] == projectName {
+			projectContainers = append(projectContainers, c)
 		}
 	}
-	return project, nil
+
+	return projectContainers, nil
+}
+
+// ---------------- Handlers ----------------
+
+// handleComposeStatus is an HTTP handler to return the status of a compose project.
+func (a *App) handleComposeStatus(w http.ResponseWriter, r *http.Request) {
+	projectName := r.URL.Query().Get("project")
+	if projectName == "" {
+		http.Error(w, "missing project query param", http.StatusBadRequest)
+		return
+	}
+
+	status, err := a.composeStatus(projectName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
+}
+
+// handleComposeParse is an HTTP handler to parse and return a compose file's content.
+func (a *App) handleComposeParse(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path string `json:"path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	cf, err := parseComposeFile(req.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cf)
+}
+
+// handleFindComposeFiles is an HTTP handler to discover compose files in a directory.
+func (a *App) handleFindComposeFiles(w http.ResponseWriter, r *http.Request) {
+	baseDir := r.URL.Query().Get("baseDir")
+	if baseDir == "" {
+		cwd, _ := os.Getwd()
+		baseDir = cwd
+	}
+
+	if !filepath.IsAbs(baseDir) {
+		cwd, _ := os.Getwd()
+		baseDir = filepath.Join(cwd, baseDir)
+	}
+
+	type ComposeFileInfo struct {
+		Path string `json:"path"`
+		Name string `json:"name"`
+	}
+	results := []ComposeFileInfo{}
+
+	filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if info.IsDir() {
+			if info.Name() == "node_modules" || strings.HasPrefix(info.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		name := info.Name()
+		if name == "docker-compose.yml" || name == "docker-compose.yaml" || name == "compose.yml" || name == "compose.yaml" {
+			rel, _ := filepath.Rel(baseDir, path)
+			results = append(results, ComposeFileInfo{
+				Path: path,
+				Name: rel,
+			})
+		}
+		return nil
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+// handleComposeUp is an HTTP handler to trigger a compose up action.
+func (a *App) handleComposeUp(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path        string `json:"path"`
+		ProjectName string `json:"projectName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	cf, err := parseComposeFile(req.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	projectDir := filepath.Dir(req.Path)
+	if err := a.composeUp(cf, projectDir, req.ProjectName); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleComposeDown is an HTTP handler to trigger a compose down action.
+func (a *App) handleComposeDown(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ProjectName string `json:"projectName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := a.composeDown(req.ProjectName); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -45,14 +45,12 @@ export function CommandLogProvider({ children }: { children: ReactNode }) {
                 const logEntry: CommandLog = JSON.parse(event.data);
 
                 setLogs(prev => {
-                    // If it's partial, we might want to update the latest log if it's the same command
-                    // But for now, just prepending is simpler as the backend sends lines.
-                    // However, to avoid spamming the log list with partials, we could consolidate.
-                    if (logEntry.isPartial && prev.length > 0 && prev[0].command === logEntry.command && prev[0].isPartial) {
+                    // If it's partial, we might want to update the latest log if it's the same command execution
+                    if (logEntry.isPartial && prev.length > 0 && prev[0].exeId === logEntry.exeId) {
                         const newLogs = [...prev];
                         newLogs[0] = {
                             ...newLogs[0],
-                            output: newLogs[0].output + "\n" + logEntry.output
+                            output: newLogs[0].output + logEntry.output
                         };
                         return newLogs;
                     }

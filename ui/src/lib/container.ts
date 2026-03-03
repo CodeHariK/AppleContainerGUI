@@ -96,6 +96,7 @@ export interface NetworkInfo {
 
 export interface CommandLog {
     id: string;
+    exeId?: string; // Stable ID for a single command execution
     timestamp: string;
     command: string;
     output: string;
@@ -428,8 +429,8 @@ export async function listNetworks(): Promise<NetworkInfo[]> {
     }
 }
 
-export async function createNetwork(name: string): Promise<void> {
-    const command = buildNetworkCreateCommand(name);
+export async function createNetwork(name: string, driver?: string): Promise<void> {
+    const command = buildNetworkCreateCommand(name, driver);
     const response = await fetch(`${API_BASE}/command`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -23,9 +23,10 @@ import {
     Cpu,
     Network,
     HardDrive,
-    Tag
+    Tag,
+    Box
 } from "lucide-react";
-import TerminalComponent from "../components/TerminalComponent";
+import TerminalComponent from "../modals/TerminalComponent";
 import {
     execContainer,
     listContainers,
@@ -37,8 +38,12 @@ import {
 } from "../lib/container";
 import type { ContainerInfo } from "../lib/container";
 import { NavBar } from "../components/NavBar";
-import "../components/ContainerDetails.css";
 import "../Dashboard.css";
+import { Button, IconButton } from "../components/Button";
+import { Card } from "../components/Card";
+import { PageHeader } from "../components/PageHeader";
+import { SectionHeader } from "../components/SectionHeader";
+import { Checkbox } from "../components/Checkbox";
 
 export default function ContainerDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -268,63 +273,63 @@ export default function ContainerDetailsPage() {
         <div className="bg-[var(--bg-primary)] text-[var(--text-primary)] font-display min-h-screen flex flex-col overflow-hidden">
             <NavBar systemRunning={systemRunning} onSystemStop={() => window.location.reload()} />
 
-            {/* Breadcrumbs & Title Bar */}
-            <div className="flex flex-col border-b border-[var(--border-color)] bg-[var(--bg-secondary)] shrink-0">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)] mb-1">
-                            <Link className="hover:text-[var(--text-primary)] transition-colors" to="/">Dashboard</Link>
-                            <ChevronRight size={14} />
-                            <span className="text-[var(--text-primary)] font-medium">Containers</span>
-                            <ChevronRight size={14} />
-                            <span className="text-[var(--accent-primary)] font-medium">{containerName}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{containerName}</h1>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border flex items-center gap-1 ${statusColor}`}>
-                                <span className={`size-1.5 rounded-full ${dotColor}`}></span>
-                                {statusText}
-                            </span>
-                        </div>
-                    </div>
+            <PageHeader
+                title={containerName || "Container Details"}
+                icon={Box}
+                actions={
                     <div className="flex items-center gap-3">
-                        <button
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border flex items-center gap-1 ${statusColor}`}>
+                            <span className={`size-1.5 rounded-full ${dotColor}`}></span>
+                            {statusText}
+                        </span>
+                        <Button
+                            variant="secondary"
                             onClick={handleRestart}
                             disabled={isActionPending}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--glass-bg)] border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--border-color)] transition-colors text-sm font-medium ${isActionPending ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            <RotateCcw size={16} className={isActionPending && pendingAction === 'restart' ? "animate-spin" : ""} />
+                            loading={isActionPending && pendingAction === 'restart'}
+                            icon={RotateCcw}
+                        >
                             Restart
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="danger"
                             onClick={handleStop}
                             disabled={!isRunning || isActionPending}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-colors text-sm font-medium ${(!isRunning || isActionPending) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            <StopCircle size={16} />
+                            loading={isActionPending && pendingAction === 'stop'}
+                            icon={StopCircle}
+                        >
                             Stop
-                        </button>
+                        </Button>
                     </div>
-                </div>
+                }
+            />
 
-                {/* Tabs */}
-                <div className="flex px-6 gap-8">
-                    <button
-                        className={`pb-3 border-b-2 text-sm font-medium transition-colors ${activeTab === 'overview' ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-bold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            <div className="flex flex-col border-b border-[var(--border-color)] bg-[var(--bg-secondary)] shrink-0">
+                <div className="flex px-6 gap-2">
+                    <Button
+                        variant={activeTab === 'overview' ? 'primary' : 'glass'}
+                        size="sm"
+                        className="rounded-t-lg rounded-b-none border-b-0"
                         onClick={() => setActiveTab('overview')}
                     >
                         Overview & Inspect
-                    </button>
-                    <button
-                        className={`pb-3 border-b-2 text-sm font-medium transition-colors ${activeTab === 'logs' ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-bold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                    </Button>
+                    <Button
+                        variant={activeTab === 'logs' ? 'primary' : 'glass'}
+                        size="sm"
+                        className="rounded-t-lg rounded-b-none border-b-0"
                         onClick={() => setActiveTab('logs')}
                     >
                         Logs
-                    </button>
-                    <button
-                        className={`pb-3 border-b-2 text-sm font-medium transition-colors ${activeTab === 'files' ? 'border-[var(--accent-primary)] text-[var(--accent-primary)] font-bold' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                    </Button>
+                    <Button
+                        variant={activeTab === 'files' ? 'primary' : 'glass'}
+                        size="sm"
+                        className="rounded-t-lg rounded-b-none border-b-0"
                         onClick={() => setActiveTab('files')}
                     >
                         Files & Terminal
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -338,9 +343,9 @@ export default function ContainerDetailsPage() {
                             <p className="text-[var(--text-secondary)] mb-6">
                                 The container must be running to inspect its filesystem or execute terminal commands.
                             </p>
-                            <Link to="/" className="btn btn-primary bg-red-500 text-white border-transparent hover:bg-red-600">
+                            <Button as={Link} to="/" variant="primary">
                                 Return to Dashboard
-                            </Link>
+                            </Button>
                         </div>
                     </div>
                 ) : (
@@ -386,11 +391,8 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
         <div className="p-6 bg-[var(--bg-primary)]">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* General Information */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <Info size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">General Information</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <SectionHeader title="General Information" icon={Info} />
                     <div className="p-5 space-y-4">
                         <div className="flex flex-col gap-1">
                             <span className="text-xs text-[var(--text-secondary)] uppercase">Container Name</span>
@@ -415,14 +417,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Resources & Limits */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <Cpu size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">Resources & Limits</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <SectionHeader title="Resources & Limits" icon={Cpu} />
                     <div className="p-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -463,14 +462,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Network & Ports */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden lg:col-span-2">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <Network size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">Network & Ports</h3>
-                    </div>
+                <Card className="overflow-hidden lg:col-span-2">
+                    <SectionHeader title="Network & Ports" icon={Network} />
                     <div className="p-5">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="space-y-4">
@@ -535,14 +531,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Volumes & Mounts */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <HardDrive size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">Volumes & Mounts</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <SectionHeader title="Volumes & Mounts" icon={HardDrive} />
                     <div className="p-5 space-y-4">
                         {Array.isArray(containerInfo.Mounts) && containerInfo.Mounts.length > 0 ? (
                             containerInfo.Mounts.map((m: any, i: number) => (
@@ -569,14 +562,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             <div className="text-center p-4 text-[var(--text-secondary)] italic">No volumes or mounts configured</div>
                         )}
                     </div>
-                </div>
+                </Card>
 
                 {/* Environment Variables */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <Server size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">Environment Variables</h3>
-                    </div>
+                <Card className="overflow-hidden">
+                    <SectionHeader title="Environment Variables" icon={Server} />
                     <div className="p-5">
                         <div className="space-y-2 font-mono text-xs max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                             {Array.isArray(containerInfo.Env) && containerInfo.Env.length > 0 ? (
@@ -596,14 +586,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             )}
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Metadata & Labels */}
-                <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] overflow-hidden lg:col-span-2">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--glass-bg)] flex items-center gap-2">
-                        <Tag size={18} className="text-[var(--accent-primary)]" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider text-[var(--text-primary)]">Metadata & Labels</h3>
-                    </div>
+                <Card className="overflow-hidden lg:col-span-2">
+                    <SectionHeader title="Metadata & Labels" icon={Tag} />
                     <div className="p-5">
                         <div className="flex flex-wrap gap-3">
                             {containerInfo.Labels && Object.keys(containerInfo.Labels).length > 0 ? (
@@ -618,7 +605,7 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             )}
                         </div>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     );
@@ -632,35 +619,30 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
                 <div className="p-4 border-b border-[var(--border-color)]">
                     <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Sources</h3>
                     <div className="space-y-1">
-                        <label className="flex items-center justify-between p-2 rounded-lg bg-[var(--glass-bg)] cursor-pointer group transition-colors">
-                            <div className="flex items-center gap-3">
-                                <input checked readOnly className="rounded border-[var(--border-color)] text-[var(--accent-primary)] bg-transparent" type="checkbox" />
-                                <div className="flex items-center gap-2">
-                                    <div className="size-2 rounded-full bg-blue-400"></div>
-                                    <span className="text-sm text-[var(--text-primary)] truncate max-w-[120px]" title={containerName}>{containerName}</span>
-                                </div>
-                            </div>
-                        </label>
+                        <Checkbox
+                            checked={true}
+                            readOnly
+                            label={containerName}
+                        />
                     </div>
                 </div>
                 <div className="p-4 flex-1">
                     <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Log Level</h3>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <button className="flex-1 text-xs font-medium py-1.5 px-2 bg-[var(--glass-bg)] text-[var(--text-primary)] rounded border border-transparent transition-all">Info</button>
-                            <button className="flex-1 text-xs font-medium py-1.5 px-2 bg-[var(--glass-bg)] text-[var(--text-primary)] rounded border border-transparent transition-all">Warn</button>
+                            <Button variant="glass" size="sm" className="flex-1">Info</Button>
+                            <Button variant="glass" size="sm" className="flex-1">Warn</Button>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="flex-1 text-xs font-medium py-1.5 px-2 bg-red-500/10 text-red-400 rounded border border-red-500/30 transition-all">Error</button>
-                            <button className="flex-1 text-xs font-medium py-1.5 px-2 bg-[var(--glass-bg)] text-[var(--text-primary)] rounded border border-transparent transition-all">Debug</button>
+                            <Button variant="danger" size="sm" className="flex-1 bg-red-500/10 border-red-500/30">Error</Button>
+                            <Button variant="glass" size="sm" className="flex-1">Debug</Button>
                         </div>
                     </div>
                 </div>
                 <div className="p-4 border-t border-[var(--border-color)]">
-                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-primary)] hover:bg-[var(--glass-bg)] text-[var(--text-primary)] text-sm font-medium rounded-lg transition-colors border border-[var(--border-color)]">
-                        <Filter size={18} />
+                    <Button variant="secondary" fullWidth icon={Filter}>
                         Advanced Filters
-                    </button>
+                    </Button>
                 </div>
             </aside>
 
@@ -676,18 +658,21 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={fetchLogs} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg text-sm font-medium transition-colors border border-transparent">
-                            <RefreshCw size={16} className={isLoadingLogs ? "animate-spin text-[var(--accent-primary)]" : ""} />
-                            <span>Refresh</span>
-                        </button>
-                        <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg text-sm font-medium transition-colors border border-transparent">
-                            <Ban size={16} />
-                            <span>Clear</span>
-                        </button>
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-lg text-sm font-medium transition-colors shadow">
-                            <Download size={16} />
-                            <span>Export</span>
-                        </button>
+                        <Button
+                            variant="glass"
+                            size="sm"
+                            onClick={fetchLogs}
+                            loading={isLoadingLogs}
+                            icon={RefreshCw}
+                        >
+                            Refresh
+                        </Button>
+                        <Button variant="glass" size="sm" icon={Ban}>
+                            Clear
+                        </Button>
+                        <Button variant="primary" size="sm" icon={Download}>
+                            Export
+                        </Button>
                     </div>
                 </div>
                 <div className="flex-1 p-6 font-mono text-sm overflow-y-auto custom-scrollbar relative">
@@ -701,12 +686,14 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
                     <div ref={logsEndRef} />
 
                     {/* Floating Scroll to Bottom Button */}
-                    <button
-                        onClick={() => logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                        className="absolute bottom-6 right-8 size-10 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 z-20"
-                    >
-                        <ArrowDown size={20} />
-                    </button>
+                    <div className="absolute bottom-6 right-8">
+                        <IconButton
+                            icon={ArrowDown}
+                            variant="primary"
+                            onClick={() => logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                            className="size-10 shadow-lg"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -728,15 +715,16 @@ function FilesTerminalTab({
                 <div className="px-4 py-3 border-b border-[var(--border-color)] flex items-center justify-between">
                     <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Filesystem</h3>
                     <div className="flex gap-1">
-                        <button className="p-1 rounded hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Navigate Up" onClick={navigateUp}>
-                            <CornerLeftUp size={16} />
-                        </button>
-                        <button className="p-1 rounded hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Upload File">
-                            <Upload size={16} />
-                        </button>
-                        <button className="p-1 rounded hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Refresh" onClick={() => loadFiles(currentPath)}>
-                            <RefreshCw size={16} className={isLoadingFiles ? "animate-spin" : ""} />
-                        </button>
+                        <IconButton icon={CornerLeftUp} variant="ghost" size="sm" onClick={navigateUp} title="Navigate Up" />
+                        <IconButton icon={Upload} variant="ghost" size="sm" title="Upload File" />
+                        <IconButton
+                            icon={RefreshCw}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => loadFiles(currentPath)}
+                            title="Refresh"
+                            loading={isLoadingFiles}
+                        />
                     </div>
                 </div>
                 <div className="px-4 py-2 bg-[var(--bg-primary)] border-b border-[var(--border-color)] flex items-center gap-2 text-xs text-[var(--text-secondary)] font-mono overflow-hidden">
@@ -780,30 +768,33 @@ function FilesTerminalTab({
                                 <Terminal size={14} className={activeTerminalId === tab.id ? 'text-[var(--accent-primary)]' : ''} />
                                 <span className="truncate flex-1">{tab.title}</span>
                                 {terminalTabs.length > 1 && (
-                                    <button
+                                    <IconButton
+                                        variant="ghost"
+                                        size="xs"
+                                        icon={X}
                                         onClick={(e) => closeTerminalTab(e, tab.id)}
-                                        className="ml-1 p-0.5 rounded-sm hover:bg-white/10 hover:text-red-400 transition-colors"
-                                    >
-                                        <X size={12} />
-                                    </button>
+                                        className="ml-1 hover:text-red-400"
+                                    />
                                 )}
                             </div>
                         ))}
-                        <button
-                            onClick={addTerminalTab}
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--glass-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors h-full"
-                            title="New Terminal"
-                        >
-                            <Plus size={16} />
-                        </button>
+                        <IconButton icon={Plus} variant="ghost" size="sm" onClick={addTerminalTab} title="New Terminal" />
                     </div>
                     <div className="flex items-center gap-2 pr-2 shrink-0">
-                        <button className="p-1.5 hover:bg-white/10 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Copy Output">
-                            <Copy size={16} />
-                        </button>
-                        <button className="p-1.5 hover:bg-white/10 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)]" title="Maximize">
-                            <Maximize size={16} />
-                        </button>
+                        <IconButton
+                            variant="ghost"
+                            size="sm"
+                            icon={Copy}
+                            title="Copy Output"
+                            onClick={() => { }}
+                        />
+                        <IconButton
+                            variant="ghost"
+                            size="sm"
+                            icon={Maximize}
+                            title="Maximize"
+                            onClick={() => { }}
+                        />
                     </div>
                 </div>
 

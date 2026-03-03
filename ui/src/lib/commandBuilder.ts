@@ -130,8 +130,13 @@ export function buildVolumeCreateCommand(name: string): string {
     return `container volume create ${name}`;
 }
 
-export function buildNetworkCreateCommand(name: string): string {
-    return `container network create ${name}`;
+export function buildNetworkCreateCommand(name: string, driver?: string): string {
+    const parts = ["container", "network", "create"];
+    if (driver) {
+        parts.push("--driver", driver);
+    }
+    parts.push(name);
+    return parts.join(" ");
 }
 
 export function buildDnsCreateCommand(domain: string): string {
