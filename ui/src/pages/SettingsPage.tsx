@@ -18,6 +18,7 @@ import { RadioGroup, Radio } from "../components/RadioGroup";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { SectionHeader } from "../components/SectionHeader";
+import { ConfirmDialog } from "../modals/Modal";
 
 export default function SettingsPage() {
     const [theme, setTheme] = useState<string>("dark");
@@ -29,6 +30,7 @@ export default function SettingsPage() {
 
     // Modal State
     const [editingProp, setEditingProp] = useState<SystemProperty | null>(null);
+    const [confirmClearPropId, setConfirmClearPropId] = useState<string | null>(null);
 
     useEffect(() => {
         const storedTheme = localStorage.getItem("theme") || "dark";
@@ -63,10 +65,16 @@ export default function SettingsPage() {
     };
 
     const handleClearProp = async (id: string) => {
-        if (!confirm(`Are you sure you want to clear the custom value for ${id}? It will revert to default.`)) return;
+        setConfirmClearPropId(id);
+    };
+
+    const confirmClearProp = async () => {
+        if (!confirmClearPropId) return;
+        const id = confirmClearPropId;
         setIsLoadingProps(true);
         try {
             await clearSystemProperty(id);
+            setConfirmClearPropId(null);
             await loadProperties();
         } catch (e: any) {
             alert(e.message || "Failed to clear property");
@@ -193,6 +201,17 @@ export default function SettingsPage() {
                     }}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!confirmClearPropId}
+                onOpenChange={(open) => !open && setConfirmClearPropId(null)}
+                title="Reset Property"
+                description={`Are you sure you want to clear the custom value for '${confirmClearPropId}'? It will revert to its system default.`}
+                confirmLabel="Reset to Default"
+                onConfirm={confirmClearProp}
+                variant="danger"
+                isLoading={isLoadingProps}
+            />
         </div>
     );
 }

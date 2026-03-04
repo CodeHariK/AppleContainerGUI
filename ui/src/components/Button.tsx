@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Button as BaseButton } from '@base-ui/react/button';
 import type { LucideIcon } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
+import './components.css';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'glass' | 'dangerGhost';
@@ -13,6 +14,24 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     as?: React.ElementType;
     to?: string; // For use with Link
 }
+
+/**
+ * Shared logic for rendering a button with an optional custom component
+ */
+const renderButtonContent = (
+    loading: boolean,
+    Icon: LucideIcon | undefined,
+    iconPosition: 'left' | 'right',
+    size: string,
+    children: React.ReactNode
+) => (
+    <>
+        {loading && <RefreshCw size={size === 'sm' ? 14 : 16} className="spin mr-2" />}
+        {!loading && Icon && iconPosition === 'left' && <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />}
+        <span className="btn-content">{children}</span>
+        {!loading && Icon && iconPosition === 'right' && <Icon size={size === 'sm' ? 14 : 18} className="ml-2" />}
+    </>
+);
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({
@@ -28,15 +47,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         as: Component,
         ...props
     }, ref) => {
-        const baseClass = 'btn-standard';
-        const variantClass = `btn-${variant}`;
-        const sizeClass = `btn-size-${size}`;
-        const widthClass = fullWidth ? 'w-full' : '';
-        const finalClassName = `${baseClass} ${variantClass} ${sizeClass} ${widthClass} ${className}`.trim();
+        const finalClassName = `btn-standard btn-${variant} btn-size-${size} ${fullWidth ? 'w-full' : ''} ${className}`.trim();
 
-        // If it's a primitive or custom component like Link, we might want to skip BaseButton's logic
-        // but for now let's try to use BaseButton's 'render' if it's a native element, 
-        // or just render the component manually if it's a Link to avoid semantic conflict as per Base UI docs.
         if (Component && Component !== 'button') {
             const FinalComp = Component as any;
             return (
@@ -46,10 +58,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                     disabled={disabled || loading}
                     {...props}
                 >
-                    {loading && <RefreshCw size={size === 'sm' ? 14 : 16} className="spin mr-2" />}
-                    {!loading && Icon && iconPosition === 'left' && <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />}
-                    <span className="btn-content">{children}</span>
-                    {!loading && Icon && iconPosition === 'right' && <Icon size={size === 'sm' ? 14 : 18} className="ml-2" />}
+                    {renderButtonContent(loading, Icon, iconPosition, size, children)}
                 </FinalComp>
             );
         }
@@ -61,10 +70,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 className={finalClassName}
                 {...props}
             >
-                {loading && <RefreshCw size={size === 'sm' ? 14 : 16} className="spin mr-2" />}
-                {!loading && Icon && iconPosition === 'left' && <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />}
-                <span className="btn-content">{children}</span>
-                {!loading && Icon && iconPosition === 'right' && <Icon size={size === 'sm' ? 14 : 18} className="ml-2" />}
+                {renderButtonContent(loading, Icon, iconPosition, size, children)}
             </BaseButton>
         );
     }
@@ -92,10 +98,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         as: Component,
         ...props
     }, ref) => {
-        const baseClass = 'btn-icon-standard';
-        const variantClass = `btn-icon-${variant}`;
-        const sizeClass = `btn-icon-size-${size}`;
-        const finalClassName = `${baseClass} ${variantClass} ${sizeClass} ${className}`.trim();
+        const finalClassName = `btn-icon-standard btn-icon-${variant} btn-icon-size-${size} ${className}`.trim();
+
+        const content = loading ? (
+            <RefreshCw size={size === 'sm' ? 14 : 18} className="spin" />
+        ) : (
+            <Icon size={size === 'sm' ? 16 : 20} />
+        );
 
         if (Component && Component !== 'button') {
             const FinalComp = Component as any;
@@ -106,7 +115,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
                     disabled={disabled || loading}
                     {...props}
                 >
-                    {loading ? <RefreshCw size={size === 'sm' ? 14 : 18} className="spin" /> : <Icon size={size === 'sm' ? 16 : 20} />}
+                    {content}
                 </FinalComp>
             );
         }
@@ -118,7 +127,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
                 className={finalClassName}
                 {...props}
             >
-                {loading ? <RefreshCw size={size === 'sm' ? 14 : 18} className="spin" /> : <Icon size={size === 'sm' ? 16 : 20} />}
+                {content}
             </BaseButton>
         );
     }

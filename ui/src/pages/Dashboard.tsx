@@ -11,9 +11,9 @@ import {
     removeContainer,
     getContainerStats
 } from "../lib/container";
-import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Toast } from "@base-ui/react/toast";
-import { NavBar } from "./NavBar";
+import { NavBar } from "../components/NavBar";
+import { ConfirmDialog } from "../modals/Modal";
 
 import {
     RefreshCw,
@@ -25,15 +25,15 @@ import {
     Terminal as TerminalIcon,
     RotateCcw,
     Rocket,
-    Box,
-    AlertCircle
+    Box
 } from 'lucide-react';
 
 import "../Dashboard.css";
-import { Input } from "./Input";
-import { Button, IconButton } from "./Button";
-import { Card } from "./Card";
-import { PageHeader } from "./PageHeader";
+import { Input } from "../components/Input";
+import { Button, IconButton } from "../components/Button";
+import { Card } from "../components/Card";
+import { PageHeader } from "../components/PageHeader";
+import Offline from "./Offline";
 
 const toastManager = Toast.createToastManager();
 
@@ -153,6 +153,7 @@ function DashboardContent() {
         return (
             <div className="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
                 <NavBar systemRunning={systemRunning} onSystemStart={refreshData} />
+                <Offline />
             </div>
         );
     }
@@ -340,30 +341,16 @@ function DashboardContent() {
             </main>
 
 
-            <AlertDialog.Root open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
-                <AlertDialog.Portal>
-                    <AlertDialog.Backdrop className="dialog-backdrop" />
-                    <AlertDialog.Popup className="dialog-popup">
-                        <AlertDialog.Title className="dialog-title flex items-center gap-2">
-                            <AlertCircle className="text-red-500" />
-                            Remove Container
-                        </AlertDialog.Title>
-                        <AlertDialog.Description className="dialog-description text-slate-600 dark:text-text-secondary">
-                            Are you sure you want to remove <strong>{confirmAction?.name}</strong>? This action cannot be undone.
-                        </AlertDialog.Description>
-                        <div className="dialog-actions">
-                            <Button variant="secondary" onClick={() => setConfirmAction(null)}>Cancel</Button>
-                            <Button
-                                variant="danger"
-                                onClick={confirmDelete}
-                                loading={actionLoading?.includes("remove")}
-                            >
-                                Remove
-                            </Button>
-                        </div>
-                    </AlertDialog.Popup>
-                </AlertDialog.Portal>
-            </AlertDialog.Root>
+            <ConfirmDialog
+                open={!!confirmAction}
+                onOpenChange={(open) => !open && setConfirmAction(null)}
+                title="Remove Container"
+                description={<>Are you sure you want to remove <strong>{confirmAction?.name}</strong>? This action cannot be undone.</>}
+                confirmLabel="Remove"
+                onConfirm={confirmDelete}
+                variant="danger"
+                isLoading={actionLoading?.includes("remove")}
+            />
 
             <Toast.Portal>
                 <Toast.Viewport className="toast-viewport">

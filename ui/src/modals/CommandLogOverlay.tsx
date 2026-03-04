@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Dialog } from "@base-ui/react/dialog";
+import { Modal } from "./Modal";
 import { useCommandLog } from "../contexts/CommandLogContext";
-import { X, Trash2, Terminal, ChevronRight } from "lucide-react";
+import { Trash2, Terminal, ChevronRight } from "lucide-react";
 import TerminalView from "../components/TerminalView";
 import { IconButton } from "../components/Button";
 
@@ -24,90 +24,57 @@ export default function CommandLogOverlay() {
     }, [open]);
 
     return (
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-            <Dialog.Portal>
-                <Dialog.Backdrop className="dialog-backdrop" style={{ backdropFilter: 'blur(4px)', backgroundColor: 'var(--text-primary)', opacity: 0.1 }} />
-                <Dialog.Popup className="premium-card animate-slide-up bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark" style={{
-                    position: 'fixed',
-                    bottom: '24px',
-                    right: '24px',
-                    width: '600px',
-                    height: '500px',
-                    maxWidth: '90vw',
-                    maxHeight: '80vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    padding: 0,
-                    zIndex: 1000,
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-                    backdropFilter: 'blur(20px)'
-                }}>
-                    <div className="flex-between border-b border-border-light dark:border-border-dark" style={{ padding: '16px 20px' }}>
-                        <div className="flex-center" style={{ gap: '10px' }}>
-                            <Terminal size={18} className="text-secondary" />
-                            <h2 className="text-text-primary-light dark:text-text-primary-dark" style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Command Console</h2>
-                            <span className="badge bg-background-light dark:bg-background-dark text-text-secondary-light dark:text-text-secondary-dark" style={{ fontSize: '10px', padding: '2px 8px' }}>Press ` to toggle</span>
+        <Modal
+            open={open}
+            onOpenChange={setOpen}
+            title="Command Console"
+            maxWidth="600px"
+        >
+            <div className="flex flex-col h-[400px]">
+                <div
+                    className="custom-scrollbar bg-background-light/50 dark:bg-background-dark/50 flex-1 overflow-y-auto p-5"
+                >
+                    {logs.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-70">
+                            <Terminal size={48} className="mb-4" />
+                            <p>No commands executed yet.</p>
                         </div>
-                        <div className="flex-center" style={{ gap: '12px' }}>
-                            <IconButton
-                                variant="ghost"
-                                onClick={clearLogs}
-                                title="Clear Logs"
-                                icon={Trash2}
-                                size="sm"
-                            />
-                            <IconButton
-                                variant="ghost"
-                                onClick={() => setOpen(false)}
-                                icon={X}
-                                size="sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div
-                        className="custom-scrollbar bg-background-light/50 dark:bg-background-dark/50"
-                        style={{
-                            flex: 1,
-                            overflowY: 'auto',
-                            padding: '20px',
-                        }}
-                    >
-                        {logs.length === 0 ? (
-                            <div className="flex-center text-text-secondary-light dark:text-text-secondary-dark" style={{ height: '100%', flexDirection: 'column', opacity: 0.7 }}>
-                                <Terminal size={48} style={{ marginBottom: '16px' }} />
-                                <p>No commands executed yet.</p>
-                            </div>
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column-reverse', gap: '8px' }}>
-                                {logs.map((log) => (
-                                    <div key={log.id} className={`p-3 rounded-lg border-l-4 ${log.isError ? 'bg-red-500/10 border-red-500' : log.isPartial ? 'bg-yellow-500/10 border-yellow-500' : 'bg-green-500/10 border-green-500'}`}>
-                                        <div className="flex-between" style={{ marginBottom: '8px' }}>
-                                            <div className="flex-center gap-2 font-medium" style={{ color: log.isError ? '#ef4444' : 'var(--accent-primary)' }}>
-                                                <ChevronRight size={14} />
-                                                <span style={{ fontSize: '12px' }}>{log.command}</span>
-                                            </div>
-                                            <span className="text-text-secondary-light dark:text-text-secondary-dark" style={{ fontSize: '10px' }}>
-                                                {new Date(log.timestamp).toLocaleTimeString()}
-                                            </span>
+                    ) : (
+                        <div className="flex flex-col-reverse gap-2">
+                            {logs.map((log) => (
+                                <div key={log.id} className={`p-3 rounded-lg border-l-4 ${log.isError ? 'bg-red-500/10 border-red-500' : log.isPartial ? 'bg-yellow-500/10 border-yellow-500' : 'bg-green-500/10 border-green-500'}`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="flex items-center gap-2 font-medium" style={{ color: log.isError ? '#ef4444' : 'var(--accent-primary)' }}>
+                                            <ChevronRight size={14} />
+                                            <span className="text-xs">{log.command}</span>
                                         </div>
-                                        <div className="text-text-primary-light dark:text-text-primary-dark opacity-90" style={{
-                                            fontSize: '12px',
-                                            lineHeight: '1.5'
-                                        }}>
-                                            <TerminalView
-                                                data={log.output || (log.isPartial ? "Running..." : "No output")}
-                                                height={log.isPartial ? "auto" : "max-content"}
-                                            />
-                                        </div>
+                                        <span className="text-text-secondary text-[10px]">
+                                            {new Date(log.timestamp).toLocaleTimeString()}
+                                        </span>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </Dialog.Popup>
-            </Dialog.Portal>
-        </Dialog.Root>
+                                    <div className="text-text-primary opacity-90 text-xs leading-relaxed">
+                                        <TerminalView
+                                            data={log.output || (log.isPartial ? "Running..." : "No output")}
+                                            height={log.isPartial ? "auto" : "max-content"}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-light dark:border-border-dark text-[10px] text-text-secondary">
+                    <span>Press ` to toggle</span>
+                    <IconButton
+                        variant="ghost"
+                        onClick={clearLogs}
+                        title="Clear Logs"
+                        icon={Trash2}
+                        size="sm"
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }

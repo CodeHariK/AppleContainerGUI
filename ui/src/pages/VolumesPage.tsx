@@ -24,6 +24,7 @@ import "../Dashboard.css";
 import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
+import { ConfirmDialog } from "../modals/Modal";
 
 export default function VolumesPage() {
     const [volumes, setVolumes] = useState<VolumeInfo[]>([]);
@@ -31,6 +32,7 @@ export default function VolumesPage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [systemRunning, setSystemRunning] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [confirmDeleteName, setConfirmDeleteName] = useState<string | null>(null);
 
     const refreshData = async () => {
         setIsLoading(true);
@@ -70,7 +72,12 @@ export default function VolumesPage() {
     };
 
     const handleDelete = async (name: string) => {
-        if (!confirm(`Are you sure you want to delete volume '${name}'?`)) return;
+        setConfirmDeleteName(name);
+    };
+
+    const confirmDelete = async () => {
+        if (!confirmDeleteName) return;
+        const name = confirmDeleteName;
         setActionLoading("delete-" + name);
         try {
             await removeVolume(name);
@@ -251,6 +258,17 @@ export default function VolumesPage() {
                     isCreating={actionLoading === "create"}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!confirmDeleteName}
+                onOpenChange={(open) => !open && setConfirmDeleteName(null)}
+                title="Delete Volume"
+                description={`Are you sure you want to delete volume '${confirmDeleteName}'? This action cannot be undone.`}
+                confirmLabel="Delete Volume"
+                onConfirm={confirmDelete}
+                variant="danger"
+                isLoading={actionLoading?.startsWith("delete-")}
+            />
         </div>
     );
 }

@@ -24,6 +24,8 @@ import { NavBar } from "../components/NavBar";
 import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
+import { ConfirmDialog } from "../modals/Modal";
+import Offline from "./Offline";
 
 export default function NetworksPage() {
     const [networks, setNetworks] = useState<NetworkInfo[]>([]);
@@ -38,6 +40,10 @@ export default function NetworksPage() {
     // DNS Domains State
     const [dnsDomains, setDnsDomains] = useState<string[]>([]);
     const [isLoadingDns, setIsLoadingDns] = useState(false);
+
+    // Confirmation States
+    const [confirmDeleteNet, setConfirmDeleteNet] = useState<{ id: string, name: string } | null>(null);
+    const [confirmDeleteDns, setConfirmDeleteDns] = useState<string | null>(null);
 
     const refreshData = async () => {
         try {
@@ -80,10 +86,16 @@ export default function NetworksPage() {
     }, []);
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Are you sure you want to delete network '${name}'?`)) return;
+        setConfirmDeleteNet({ id, name });
+    };
+
+    const confirmDeleteNetwork = async () => {
+        if (!confirmDeleteNet) return;
+        const { id } = confirmDeleteNet;
         setActionLoading(id);
         try {
             await removeNetwork(id);
+            setConfirmDeleteNet(null);
             refreshData();
         } catch (e: any) {
             alert(e.message || "Failed to delete network");
@@ -93,12 +105,20 @@ export default function NetworksPage() {
     };
 
     const handleDeleteDns = async (domain: string) => {
-        if (!confirm(`Are you sure you want to remove DNS entry for '${domain}'?`)) return;
+        setConfirmDeleteDns(domain);
+    };
+
+    const confirmDeleteDnsEntry = async () => {
+        if (!confirmDeleteDns) return;
+        setActionLoading("delete-dns-" + confirmDeleteDns);
         try {
-            await deleteDnsDomain(domain);
+            await deleteDnsDomain(confirmDeleteDns);
+            setConfirmDeleteDns(null);
             loadDnsDomains();
         } catch (e: any) {
             alert(e.message || "Failed to delete DNS entry");
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -178,11 +198,7 @@ export default function NetworksPage() {
                 />
 
                 {!systemRunning ? (
-                    <Card className="text-center p-12">
-                        <Network size={48} className="mx-auto mb-4 text-text-secondary opacity-50" />
-                        <p className="text-slate-900 dark:text-white font-medium">The container daemon is offline.</p>
-                        <p className="text-text-secondary mt-1">Start the system from the dashboard to manage networks.</p>
-                    </Card>
+                    <Offline />
                 ) : (
                     <>
                         {networks.length === 0 ? (
@@ -348,6 +364,7 @@ export default function NetworksPage() {
                     }}
                 />
             )}
+
             {addDnsOpen && (
                 <AddDnsModal
                     onClose={() => setAddDnsOpen(false)}
@@ -357,6 +374,28 @@ export default function NetworksPage() {
                     }}
                 />
             )}
+
+            <ConfirmDialog
+                open={!!confirmDeleteNet}
+                onOpenChange={(open) => !open && setConfirmDeleteNet(null)}
+                title="Delete Network"
+                description={`Are you sure you want to delete network '${confirmDeleteNet?.name}'? This may affect connected containers.`}
+                confirmLabel="Delete Network"
+                onConfirm={confirmDeleteNetwork}
+                variant="danger"
+                isLoading={actionLoading === confirmDeleteNet?.id}
+            />
+
+            <ConfirmDialog
+                open={!!confirmDeleteDns}
+                onOpenChange={(open) => !open && setConfirmDeleteDns(null)}
+                title="Remove DNS Entry"
+                description={`Are you sure you want to remove the DNS entry for '${confirmDeleteDns}'?`}
+                confirmLabel="Remove Entry"
+                onConfirm={confirmDeleteDnsEntry}
+                variant="danger"
+                isLoading={actionLoading === ("delete-dns-" + confirmDeleteDns)}
+            />
         </div>
     );
 }

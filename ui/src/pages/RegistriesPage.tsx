@@ -23,6 +23,7 @@ import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { SectionHeader } from "../components/SectionHeader";
+import { ConfirmDialog } from "../modals/Modal";
 
 export default function RegistriesPage() {
     const [registries, setRegistries] = useState<string[]>([]);
@@ -34,6 +35,9 @@ export default function RegistriesPage() {
     const [server, setServer] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+
+    // Confirmation State
+    const [confirmLogoutServer, setConfirmLogoutServer] = useState<string | null>(null);
 
     const refreshData = async () => {
         setIsLoading(true);
@@ -81,8 +85,16 @@ export default function RegistriesPage() {
     }
 
     const handleLogout = (regServer: string) => {
-        if (!confirm(`Are you sure you want to log out of ${regServer}?`)) return;
-        executeAction("logout-" + regServer, () => registryLogout(regServer));
+        setConfirmLogoutServer(regServer);
+    }
+
+    const confirmLogout = async () => {
+        if (!confirmLogoutServer) return;
+        const regServer = confirmLogoutServer;
+        executeAction("logout-" + regServer, async () => {
+            await registryLogout(regServer);
+            setConfirmLogoutServer(null);
+        });
     }
 
     return (
@@ -253,6 +265,17 @@ export default function RegistriesPage() {
                     </div>
                 )}
             </main>
+
+            <ConfirmDialog
+                open={!!confirmLogoutServer}
+                onOpenChange={(open) => !open && setConfirmLogoutServer(null)}
+                title="Sign Out of Registry"
+                description={`Are you sure you want to log out of ${confirmLogoutServer}? You may need to sign in again to pull private images.`}
+                confirmLabel="Sign Out"
+                onConfirm={confirmLogout}
+                variant="danger"
+                isLoading={actionLoading === ("logout-" + confirmLogoutServer)}
+            />
         </div>
     );
 }

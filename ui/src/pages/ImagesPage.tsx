@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Dialog } from '@base-ui/react/dialog';
+
 import { Select } from '@base-ui/react/select';
 
 import { Toast } from "@base-ui/react/toast";
@@ -18,13 +18,10 @@ import {
     Play,
     Trash2,
     Layers2,
-    HardDrive,
     FileCode,
-    X,
     FolderOpen,
     Save,
     Rocket,
-    AlertTriangle,
     Box,
     ChevronDown,
     Download,
@@ -50,106 +47,13 @@ import {
 import type { ImageInfo } from "../lib/container";
 import { Input } from "../components/Input";
 import CreateContainerModal from "../modals/CreateContainerModal";
+import { ConfirmDialog, Modal } from "../modals/Modal";
+import SaveImageModal from "../modals/SaveImageModal";
+import BuildImageModal from "../modals/BuildImageModal";
+import DnsSetupModal from "../modals/DnsSetupModal";
 
 
-import * as React from 'react';
 
-interface ModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    title: string;
-    children: React.ReactNode;
-    maxWidth?: string;
-}
-
-export function Modal({ open, onOpenChange, title, children, maxWidth = '500px' }: ModalProps) {
-    return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Backdrop className="modal-backdrop" />
-                <Dialog.Popup className="premium-card modal-popup" style={{ maxWidth }}>
-                    <div className="flex-between mb-4">
-                        <Dialog.Title style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>
-                            {title}
-                        </Dialog.Title>
-                        <Dialog.Close className="btn-icon">
-                            <X size={20} />
-                        </Dialog.Close>
-                    </div>
-                    {children}
-                </Dialog.Popup>
-            </Dialog.Portal>
-        </Dialog.Root>
-    );
-}
-
-interface ConfirmDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    title: string;
-    description: string;
-    confirmLabel?: string;
-    onConfirm: () => void | Promise<void>;
-    variant?: 'danger' | 'primary';
-    isLoading?: boolean;
-}
-
-export function ConfirmDialog({
-    open,
-    onOpenChange,
-    title,
-    description,
-    confirmLabel = "Confirm",
-    onConfirm,
-    variant = 'primary',
-    isLoading = false
-}: ConfirmDialogProps) {
-    return (
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            <Dialog.Portal>
-                <Dialog.Backdrop className="modal-backdrop" />
-                <Dialog.Popup className="premium-card modal-popup" style={{ maxWidth: '400px', textAlign: 'center' }}>
-                    <div className="flex flex-col items-center">
-                        {variant === 'danger' && (
-                            <AlertTriangle size={40} className="text-red-500 mb-4" />
-                        )}
-
-                        <Dialog.Title className="text-xl font-semibold mb-2">
-                            {title}
-                        </Dialog.Title>
-
-                        <Dialog.Description className="text-text-secondary text-sm mb-6 leading-relaxed">
-                            {description}
-                        </Dialog.Description>
-
-                        <div className="flex gap-3 w-full">
-                            <Button
-                                variant="secondary"
-                                fullWidth
-                                disabled={isLoading}
-                                onClick={() => onOpenChange(false)}
-                            >
-                                Cancel
-                            </Button>
-
-                            <Button
-                                variant={variant}
-                                fullWidth
-                                onClick={async () => {
-                                    await onConfirm();
-                                    onOpenChange(false);
-                                }}
-                                loading={isLoading}
-                            >
-                                {confirmLabel}
-                            </Button>
-                        </div>
-                    </div>
-                </Dialog.Popup>
-            </Dialog.Portal>
-        </Dialog.Root>
-    );
-}
 
 const MODES = [
     { label: 'Images', value: 'images', icon: <Box size={18} /> },
@@ -432,62 +336,28 @@ export default function ImagesPage() {
                 }}
             />
 
-            <Modal
+            <SaveImageModal
                 open={!!imageToSave}
                 onOpenChange={(open) => !open && setImageToSave(null)}
-                title="Save Image to Tarball"
-            >
-                <div className="flex flex-col gap-4">
-                    <Input
-                        label="Destination Path"
-                        icon={HardDrive}
-                        placeholder="/tmp/myapp.tar"
-                        value={imageToSave?.path || ""}
-                        onChange={(e) => setImageToSave(prev => prev ? { ...prev, path: e.target.value } : null)}
-                    />
-                    <div className="flex gap-3 mt-2">
-                        <Button variant="secondary" fullWidth onClick={() => setImageToSave(null)}>Cancel</Button>
-                        <Button variant="primary" fullWidth onClick={async () => {
-                            if (imageToSave) {
-                                await executeAction("save-img", () => saveImage(imageToSave.repository, imageToSave.path));
-                                setImageToSave(null);
-                            }
-                        }}>Save Image</Button>
-                    </div>
-                </div>
-            </Modal>
+                imageToSave={imageToSave}
+                setImageToSave={setImageToSave}
+                isSaving={actionLoading === "save-img"}
+                onSave={async (repo, path) => {
+                    await executeAction("save-img", () => saveImage(repo, path));
+                }}
+            />
 
-            <Modal
+            <BuildImageModal
                 open={!!dockerfileToBuild}
                 onOpenChange={(open) => !open && setDockerfileToBuild(null)}
-                title="Build New Image"
-            >
-                <div className="flex flex-col gap-6">
-                    <Input
-                        label="Target Tag"
-                        icon={Rocket}
-                        placeholder="e.g. my-app:v1.0"
-                        value={dockerfileToBuild?.tag || ""}
-                        onChange={(e) => setDockerfileToBuild(prev => prev ? { ...prev, tag: e.target.value } : null)}
-                        className="font-mono text-sm"
-                    />
-                    <p className="text-[11px] text-text-secondary px-1 mt-1 flex items-center gap-1">
-                        <AlertTriangle size={10} /> The tag must be lowercase and follow docker naming conventions.
-                    </p>
-                    <div className="flex gap-3">
-                        <Button variant="secondary" fullWidth onClick={() => setDockerfileToBuild(null)}>Cancel</Button>
-                        <Button variant="primary" fullWidth icon={Rocket} onClick={async () => {
-                            if (dockerfileToBuild) {
-                                const dir = dockerfileToBuild.path.substring(0, dockerfileToBuild.path.lastIndexOf('/'));
-                                await executeAction("build-df", () => buildImage(`container build -t ${dockerfileToBuild.tag} -f ${dockerfileToBuild.path} ${dir}`));
-                                setDockerfileToBuild(null);
-                            }
-                        }}>
-                            Start Build
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                dockerfileToBuild={dockerfileToBuild}
+                setDockerfileToBuild={setDockerfileToBuild}
+                isBuilding={actionLoading === "build-df"}
+                onBuild={async (path, tag) => {
+                    const dir = path.substring(0, path.lastIndexOf('/'));
+                    await executeAction("build-df", () => buildImage(`container build -t ${tag} -f ${path} ${dir}`));
+                }}
+            />
 
             <Toast.Portal>
                 <Toast.Viewport className="toast-viewport">
@@ -883,30 +753,11 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
                 )}
             </main>
 
-            <Modal open={showSudoModal} onOpenChange={setShowSudoModal} title="Local DNS Configuration">
-                <div className="flex flex-col gap-4">
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                        To enable direct service access via <b>*.{projectName}.local</b>, run the following command in your terminal:
-                    </p>
-                    <div className="bg-black/90 p-4 rounded-xl font-mono text-sm text-primary border border-primary/20 flex items-center justify-between group">
-                        <code>sudo container system dns create {projectName}</code>
-                        <IconButton
-                            icon={RefreshCw}
-                            variant="ghost"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100"
-                        />
-                    </div>
-                    <Button
-                        variant="primary"
-                        fullWidth
-                        className="mt-2"
-                        onClick={() => setShowSudoModal(false)}
-                    >
-                        I've configured it
-                    </Button>
-                </div>
-            </Modal>
+            <DnsSetupModal
+                open={showSudoModal}
+                onOpenChange={setShowSudoModal}
+                projectName={projectName}
+            />
 
             <ConfirmDialog
                 open={showTearDownConfirm}
