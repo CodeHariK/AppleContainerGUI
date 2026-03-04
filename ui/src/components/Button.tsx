@@ -3,6 +3,7 @@ import { Button as BaseButton } from '@base-ui/react/button';
 import type { LucideIcon } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
 import './components.css';
+import { Text } from './Typography';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'glass' | 'dangerGhost';
@@ -28,7 +29,7 @@ const renderButtonContent = (
     <>
         {loading && <RefreshCw size={size === 'sm' ? 14 : 16} className="spin mr-2" />}
         {!loading && Icon && iconPosition === 'left' && <Icon size={size === 'sm' ? 14 : 18} className="mr-2" />}
-        <span className="btn-content">{children}</span>
+        <Text className="btn-content">{children}</Text>
         {!loading && Icon && iconPosition === 'right' && <Icon size={size === 'sm' ? 14 : 18} className="ml-2" />}
     </>
 );

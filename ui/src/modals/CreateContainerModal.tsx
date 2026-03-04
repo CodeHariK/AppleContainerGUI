@@ -8,6 +8,7 @@ import { Button, IconButton } from "../components/Button";
 import "../Dashboard.css";
 import { buildRunCommand, buildCreateCommand } from "../lib/commandBuilder";
 import { Modal } from "./Modal";
+import { Heading, Text } from "../components/Typography";
 
 interface Props {
     imageName?: string;
@@ -92,9 +93,9 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                 {/* Image Selection (if not provided) */}
                 {!imageName && (
                     <section className="mb-6">
-                        <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                        <Heading level={3} weight="semibold" color="primary" className="mb-3 flex items-center gap-2">
                             <Package size={16} /> Image
-                        </h3>
+                        </Heading>
                         <Input
                             label="Image Reference"
                             placeholder="e.g., redis:latest"
@@ -106,9 +107,9 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
 
                 {/* General */}
                 <section className="mb-6">
-                    <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                    <Heading level={3} weight="semibold" color="primary" className="mb-3 flex items-center gap-2">
                         <Shield size={16} /> General
-                    </h3>
+                    </Heading>
                     <div className="mb-4 pl-1">
                         <Switch
                             label="Run immediately after creation"
@@ -165,9 +166,9 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                 {/* Ports */}
                 <section className="mb-6">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                        <Heading level={3} weight="semibold" color="primary" className="flex items-center gap-2">
                             <Globe size={16} /> Port Forwards (-p)
-                        </h3>
+                        </Heading>
                         <Button variant="secondary" size="sm" onClick={addPort} icon={Plus}>
                             Add Port
                         </Button>
@@ -179,7 +180,7 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                                 value={port.host}
                                 onChange={e => updatePort(idx, "host", e.target.value)}
                             />
-                            <span className="pb-3 text-slate-400">:</span>
+                            <Text color="secondary" className="pb-3 text-slate-400">:</Text>
                             <Input
                                 placeholder="Container"
                                 value={port.container}
@@ -189,16 +190,16 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                         </div>
                     ))}
                     {ports.length === 0 && (
-                        <p className="text-sm italic text-slate-500 pl-1">No ports configured.</p>
+                        <Text variant="small" color="secondary" className="italic pl-1">No ports configured.</Text>
                     )}
                 </section>
 
                 {/* Env Vars */}
                 <section className="mb-6">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                        <Heading level={3} weight="semibold" color="primary" className="flex items-center gap-2">
                             <Terminal size={16} /> Environment Variables (-e)
-                        </h3>
+                        </Heading>
                         <Button variant="secondary" size="sm" onClick={addEnv} icon={Plus}>
                             Add Env
                         </Button>
@@ -210,7 +211,7 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                                 value={e.key}
                                 onChange={ev => updateEnv(idx, "key", ev.target.value)}
                             />
-                            <span className="pb-3 text-slate-400">=</span>
+                            <Text color="secondary" className="pb-3 text-slate-400">=</Text>
                             <Input
                                 placeholder="Value"
                                 value={e.value}
@@ -220,16 +221,16 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                         </div>
                     ))}
                     {env.length === 0 && (
-                        <p className="text-sm italic text-slate-500 pl-1">No env variables configured.</p>
+                        <Text variant="small" color="secondary" className="italic pl-1">No env variables configured.</Text>
                     )}
                 </section>
 
                 {/* Volumes */}
                 <section className="mb-6">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+                        <Heading level={3} weight="semibold" color="primary" className="flex items-center gap-2">
                             <HardDrive size={16} /> Bind Mounts (-v)
-                        </h3>
+                        </Heading>
                         <Button variant="secondary" size="sm" onClick={addVol} icon={Plus}>
                             Add Mount
                         </Button>
@@ -241,7 +242,7 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                                 value={vol.host}
                                 onChange={e => updateVol(idx, "host", e.target.value)}
                             />
-                            <span className="pb-3 text-slate-400">:</span>
+                            <Text color="secondary" className="pb-3 text-slate-400">:</Text>
                             <Input
                                 placeholder="Container Path (/app)"
                                 value={vol.container}
@@ -251,14 +252,14 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                         </div>
                     ))}
                     {volumes.length === 0 && (
-                        <p className="text-sm italic text-slate-500 pl-1">No bind mounts configured.</p>
+                        <Text variant="small" color="secondary" className="italic pl-1">No bind mounts configured.</Text>
                     )}
                 </section>
             </div>
 
             <div style={{ marginTop: "16px" }}>
                 <div className="command-preview mb-4" style={{ background: "rgba(0,0,0,0.3)", padding: "12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                    <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Command Preview</div>
+                    <Text variant="xs" color="secondary" uppercase tracking="widest" className="mb-1">Command Preview</Text>
                     <code style={{ fontSize: "12px", color: "var(--accent-primary)", wordBreak: "break-all", fontFamily: "monospace" }}>{currentCommand}</code>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>

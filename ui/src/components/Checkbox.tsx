@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Checkbox as BaseCheckbox } from '@base-ui/react/checkbox';
 import { Check } from 'lucide-react';
+import { Text } from './Typography';
 
 interface CheckboxProps extends React.ComponentPropsWithoutRef<typeof BaseCheckbox.Root> {
     label?: string;
@@ -28,9 +29,9 @@ export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
                     </BaseCheckbox.Indicator>
                 </BaseCheckbox.Root>
                 {label && (
-                    <span className="text-sm text-slate-600 dark:text-text-secondary group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                    <Text variant="small" color="secondary" className="group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                         {label}
-                    </span>
+                    </Text>
                 )}
             </label>
         );

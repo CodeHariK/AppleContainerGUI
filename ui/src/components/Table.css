@@ -1,0 +1,78 @@
+/* Table Component Styles */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+}
+
+.table-standard {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* Header Styles */
+.table-thead {
+    background-color: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table-th {
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* Body Styles */
+.table-tbody {
+    background-color: transparent;
+}
+
+.table-tbody tr:not(:last-child) {
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Row Styles */
+.table-tr {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-tr-hover:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Cell Styles */
+.table-td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+}
+
+/* Responsive Utilities */
+@media (max-width: 640px) {
+    .table-hide-sm {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-hide-md {
+        display: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .table-hide-lg {
+        display: none;
+    }
+}
+
+/* Status variants if needed specifically for tables */
+.table-status-cell {
+    width: 4rem;
+    text-align: center;
+}

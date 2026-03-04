@@ -23,7 +23,7 @@ import {
     Cpu,
     Network,
     HardDrive,
-    Tag,
+    Tag as TagIcon,
     Box
 } from "lucide-react";
 import TerminalComponent from "../modals/TerminalComponent";
@@ -31,19 +31,23 @@ import {
     execContainer,
     listContainers,
     getContainerLogs,
-    checkSystemStatus,
     stopContainer,
     restartContainer,
     API_BASE
 } from "../lib/container";
 import type { ContainerInfo } from "../lib/container";
-import { NavBar } from "../components/NavBar";
 import "../Dashboard.css";
 import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
+import { PageMain } from "../components/PageMain";
+import { Table, Thead, Tbody, Tr, Th, Td } from "../components/Table";
+import { Tag } from "../components/Tag";
 import { SectionHeader } from "../components/SectionHeader";
 import { Checkbox } from "../components/Checkbox";
+import { useSystem } from "../contexts/SystemContext";
+import { H2, H3, H4, P, Body, Small, Caption, Code, Label } from "../components/Typography";
+
 
 export default function ContainerDetailsPage() {
     const { id } = useParams<{ id: string }>();
@@ -51,7 +55,7 @@ export default function ContainerDetailsPage() {
     const [containerName, setContainerName] = useState<string>("Loading...");
     const [isRunning, setIsRunning] = useState<boolean>(true);
     const [containerInfo, setContainerInfo] = useState<ContainerInfo | null>(null);
-    const [systemRunning, setSystemRunning] = useState<boolean>(true);
+    const { systemRunning } = useSystem();
 
     // Tabs: 'overview', 'logs', 'files'
     const [activeTab, setActiveTab] = useState<"overview" | "logs" | "files">("overview");
@@ -110,9 +114,7 @@ export default function ContainerDetailsPage() {
 
         const init = async () => {
             try {
-                const isSystemRunning = await checkSystemStatus();
-                setSystemRunning(isSystemRunning);
-                if (!isSystemRunning) {
+                if (!systemRunning) {
                     setContainerName("System Offline");
                     setIsRunning(false);
                     return;
@@ -133,7 +135,7 @@ export default function ContainerDetailsPage() {
             }
         };
         init();
-    }, [id]);
+    }, [id, systemRunning]);
 
     useEffect(() => {
         if (activeTab === "files" && isRunning) {
@@ -270,40 +272,40 @@ export default function ContainerDetailsPage() {
     const dotColor = isRunning ? "bg-green-500" : "bg-red-500";
 
     return (
-        <div className="bg-[var(--bg-primary)] text-[var(--text-primary)] font-display min-h-screen flex flex-col overflow-hidden">
-            <NavBar systemRunning={systemRunning} onSystemStop={() => window.location.reload()} />
-
-            <PageHeader
-                title={containerName || "Container Details"}
-                icon={Box}
-                actions={
-                    <div className="flex items-center gap-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border flex items-center gap-1 ${statusColor}`}>
-                            <span className={`size-1.5 rounded-full ${dotColor}`}></span>
-                            {statusText}
-                        </span>
-                        <Button
-                            variant="secondary"
-                            onClick={handleRestart}
-                            disabled={isActionPending}
-                            loading={isActionPending && pendingAction === 'restart'}
-                            icon={RotateCcw}
-                        >
-                            Restart
-                        </Button>
-                        <Button
-                            variant="danger"
-                            onClick={handleStop}
-                            disabled={!isRunning || isActionPending}
-                            loading={isActionPending && pendingAction === 'stop'}
-                            icon={StopCircle}
-                        >
-                            Stop
-                        </Button>
-                    </div>
-                }
-            />
-
+        <PageMain
+            header={
+                <PageHeader
+                    title={containerName || "Container Details"}
+                    icon={Box}
+                    actions={
+                        <div className="flex items-center gap-3">
+                            <Body weight="bold" uppercase tracking="widest" className={`px-2 py-0.5 rounded-full variant-xs border flex items-center gap-1 ${statusColor}`}>
+                                <span className={`size-1.5 rounded-full ${dotColor}`}></span>
+                                {statusText}
+                            </Body>
+                            <Button
+                                variant="secondary"
+                                onClick={handleRestart}
+                                disabled={isActionPending}
+                                loading={isActionPending && pendingAction === 'restart'}
+                                icon={RotateCcw}
+                            >
+                                Restart
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={handleStop}
+                                disabled={!isRunning || isActionPending}
+                                loading={isActionPending && pendingAction === 'stop'}
+                                icon={StopCircle}
+                            >
+                                Stop
+                            </Button>
+                        </div>
+                    }
+                />
+            }
+        >
             <div className="flex flex-col border-b border-[var(--border-color)] bg-[var(--bg-secondary)] shrink-0">
                 <div className="flex px-6 gap-2">
                     <Button
@@ -334,15 +336,15 @@ export default function ContainerDetailsPage() {
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col pt-6">
                 {!isRunning && activeTab === "files" ? (
                     <div className="flex items-center justify-center p-8 flex-1">
                         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-8 max-w-md text-center">
                             <Ban size={48} className="mx-auto text-red-500 mb-4" />
-                            <h2 className="text-xl font-bold text-red-500 mb-2">Container Not Running</h2>
-                            <p className="text-[var(--text-secondary)] mb-6">
+                            <H2 className="text-red-500 mb-2">Container Not Running</H2>
+                            <P color="secondary" className="mb-6">
                                 The container must be running to inspect its filesystem or execute terminal commands.
-                            </p>
+                            </P>
                             <Button as={Link} to="/" variant="primary">
                                 Return to Dashboard
                             </Button>
@@ -379,8 +381,8 @@ export default function ContainerDetailsPage() {
                         )}
                     </>
                 )}
-            </main>
-        </div>
+            </div>
+        </PageMain>
     );
 }
 
@@ -395,25 +397,25 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                     <SectionHeader title="General Information" icon={Info} />
                     <div className="p-5 space-y-4">
                         <div className="flex flex-col gap-1">
-                            <span className="text-xs text-[var(--text-secondary)] uppercase">Container Name</span>
-                            <span className="font-mono text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">
+                            <Caption color="secondary" uppercase>Container Name</Caption>
+                            <Code variant="small" background="subtle" className="truncate">
                                 {containerName}
-                            </span>
+                            </Code>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <span className="text-xs text-[var(--text-secondary)] uppercase">Container ID</span>
-                            <span className="font-mono text-sm text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)] truncate">
+                            <Caption color="secondary" uppercase>Container ID</Caption>
+                            <Code variant="small" background="subtle" className="truncate">
                                 {containerInfo.ID}
-                            </span>
+                            </Code>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
-                                <span className="text-xs text-[var(--text-secondary)] uppercase">Image</span>
-                                <span className="font-mono text-sm text-[var(--accent-primary)] truncate">{containerInfo.Image}</span>
+                                <Label variant="xs" color="secondary" uppercase>Image</Label>
+                                <Small color="accent" mono className="truncate">{containerInfo.Image}</Small>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <span className="text-xs text-[var(--text-secondary)] uppercase">Status</span>
-                                <span className="font-mono text-sm text-[var(--text-primary)] truncate">{containerInfo.Status}</span>
+                                <Label variant="xs" color="secondary" uppercase>Status</Label>
+                                <Small mono className="truncate">{containerInfo.Status}</Small>
                             </div>
                         </div>
                     </div>
@@ -425,11 +427,11 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                     <div className="p-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <span className="text-xs text-[var(--text-secondary)] uppercase block mb-3">CPU Allocation</span>
+                                <Caption color="secondary" uppercase className="block mb-3">CPU Allocation</Caption>
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-xs font-mono">
-                                        <span className="text-[var(--text-secondary)]">CPUs</span>
-                                        <span className="text-[var(--text-primary)]">{containerInfo.CPUs || "Unlimited"}</span>
+                                        <Caption color="secondary" mono>CPUs</Caption>
+                                        <Caption color="primary" mono>{containerInfo.CPUs || "Unlimited"}</Caption>
                                     </div>
                                     <div className="h-1.5 w-full bg-[var(--bg-primary)] rounded-full overflow-hidden">
                                         <div className="h-full bg-[var(--accent-primary)]" style={{ width: containerInfo.CPUs ? '50%' : '100%' }}></div>
@@ -437,13 +439,13 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                                 </div>
                             </div>
                             <div>
-                                <span className="text-xs text-[var(--text-secondary)] uppercase block mb-3">Memory Allocation</span>
+                                <Caption color="secondary" uppercase className="block mb-3">Memory Allocation</Caption>
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-xs font-mono">
-                                        <span className="text-[var(--text-secondary)]">Limit</span>
-                                        <span className="text-[var(--text-primary)]">
+                                        <Caption color="secondary" mono>Limit</Caption>
+                                        <Caption color="primary" mono>
                                             {containerInfo.MemoryBytes ? (containerInfo.MemoryBytes / 1024 / 1024).toFixed(0) + " MB" : "Unlimited"}
-                                        </span>
+                                        </Caption>
                                     </div>
                                     <div className="h-1.5 w-full bg-[var(--bg-primary)] rounded-full overflow-hidden">
                                         <div className="h-full bg-[var(--accent-primary)]" style={{ width: containerInfo.MemoryBytes ? '25%' : '100%' }}></div>
@@ -453,12 +455,12 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                         </div>
                         <div className="mt-6 pt-6 border-t border-[var(--border-color)] grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
-                                <span className="text-xs text-[var(--text-secondary)] uppercase">Created</span>
-                                <span className="font-mono text-[11px] text-[var(--text-primary)]">{containerInfo.CreatedAt}</span>
+                                <Label variant="xs" color="secondary" uppercase>Created</Label>
+                                <Caption mono>{containerInfo.CreatedAt}</Caption>
                             </div>
                             <div className="flex flex-col gap-1">
-                                <span className="text-xs text-[var(--text-secondary)] uppercase">State</span>
-                                <span className="font-mono text-[13px] text-[var(--text-primary)]">{containerInfo.State}</span>
+                                <Label variant="xs" color="secondary" uppercase>State</Label>
+                                <Small mono>{containerInfo.State}</Small>
                             </div>
                         </div>
                     </div>
@@ -470,22 +472,22 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                     <div className="p-5">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase">Interfaces</h4>
+                                <H4 uppercase variant="xs" color="secondary" className="mb-4">Interfaces</H4>
                                 <div className="space-y-3">
                                     {Array.isArray(containerInfo.Networks) && containerInfo.Networks.length > 0 ? (
                                         containerInfo.Networks.map((n: any, i: number) => (
                                             <div key={i} className="mb-4">
                                                 <div className="flex justify-between items-center py-2 border-b border-[var(--border-color)]/50">
-                                                    <span className="text-sm text-[var(--text-secondary)]">Network Mode</span>
-                                                    <span className="text-sm font-mono text-[var(--text-primary)]">{n.network || "Unknown"}</span>
+                                                    <Caption color="secondary">Network Mode</Caption>
+                                                    <Small mono>{n.network || "Unknown"}</Small>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[var(--border-color)]/50">
-                                                    <span className="text-sm text-[var(--text-secondary)]">IP Address</span>
-                                                    <span className="text-sm font-mono text-[var(--accent-primary)]">{n.ipv4Address || n.ipv6Address || "-"}</span>
+                                                    <Small color="secondary">IP Address</Small>
+                                                    <Caption color="accent" mono>{n.ipv4Address || n.ipv6Address || "-"}</Caption>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[var(--border-color)]/50">
-                                                    <span className="text-sm text-[var(--text-secondary)]">MAC</span>
-                                                    <span className="text-sm font-mono text-[var(--text-primary)] truncate max-w-[120px]">{n.macAddress || "-"}</span>
+                                                    <Small color="secondary">MAC</Small>
+                                                    <Small mono className="truncate max-w-[120px]">{n.macAddress || "-"}</Small>
                                                 </div>
                                             </div>
                                         ))
@@ -495,38 +497,38 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                                 </div>
                             </div>
                             <div className="lg:col-span-2 space-y-4">
-                                <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase">Port Mappings</h4>
+                                <H4 uppercase variant="xs" color="secondary" className="mb-4">Port Mappings</H4>
                                 <div className="overflow-hidden border border-[var(--border-color)] rounded bg-[var(--bg-primary)] overflow-x-auto">
-                                    <table className="w-full text-left text-sm font-mono">
-                                        <thead className="bg-[var(--glass-bg)] text-[var(--text-secondary)] uppercase text-[10px] tracking-widest border-b border-[var(--border-color)]">
-                                            <tr>
-                                                <th className="px-4 py-2 font-medium">Host IP</th>
-                                                <th className="px-4 py-2 font-medium">Host Port</th>
-                                                <th className="px-4 py-2 font-medium">Container Port</th>
-                                                <th className="px-4 py-2 font-medium">Protocol</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-[var(--border-color)]/50">
+                                    <Table>
+                                        <Thead>
+                                            <Tr>
+                                                <Th>Host IP</Th>
+                                                <Th>Host Port</Th>
+                                                <Th>Container Port</Th>
+                                                <Th>Protocol</Th>
+                                            </Tr>
+                                        </Thead>
+                                        <Tbody>
                                             {Array.isArray(containerInfo.Ports) && containerInfo.Ports.length > 0 ? (
                                                 containerInfo.Ports.map((p: any, i: number) => (
-                                                    <tr key={i} className="hover:bg-white/5 transition-colors">
-                                                        <td className="px-4 py-3 text-[var(--text-secondary)]">{p.hostAddress || "0.0.0.0"}</td>
-                                                        <td className="px-4 py-3 text-[var(--accent-primary)] font-bold">{p.hostPort || "-"}</td>
-                                                        <td className="px-4 py-3 text-[var(--text-primary)]">{p.containerPort}</td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[10px] uppercase">
+                                                    <Tr key={i}>
+                                                        <Td className="text-[var(--text-secondary)]">{p.hostAddress || "0.0.0.0"}</Td>
+                                                        <Td className="text-[var(--accent-primary)] font-bold">{p.hostPort || "-"}</Td>
+                                                        <Td className="text-[var(--text-primary)]">{p.containerPort}</Td>
+                                                        <Td>
+                                                            <Tag variant="standard" className="uppercase">
                                                                 {p.proto || "TCP"}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
+                                                            </Tag>
+                                                        </Td>
+                                                    </Tr>
                                                 ))
                                             ) : (
-                                                <tr>
-                                                    <td colSpan={4} className="px-4 py-4 text-center text-[var(--text-secondary)] italic">No published ports</td>
-                                                </tr>
+                                                <Tr hoverable={false}>
+                                                    <Td colSpan={4} className="text-center text-[var(--text-secondary)] italic">No published ports</Td>
+                                                </Tr>
                                             )}
-                                        </tbody>
-                                    </table>
+                                        </Tbody>
+                                    </Table>
                                 </div>
                             </div>
                         </div>
@@ -541,19 +543,19 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                             containerInfo.Mounts.map((m: any, i: number) => (
                                 <div key={i} className="bg-[var(--bg-primary)] rounded border border-[var(--border-color)] p-3 group hover:border-[var(--accent-primary)]/50 transition-colors">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-bold uppercase text-[var(--accent-primary)] tracking-wider">
+                                        <Caption weight="bold" uppercase tracking="widest" color="accent">
                                             {typeof m.type === "string" ? m.type : typeof m.type === "object" ? Object.keys(m.type)[0] : "volume"}
-                                        </span>
-                                        <span className="text-[10px] font-bold uppercase text-[var(--text-secondary)]">Read/Write</span>
+                                        </Caption>
+                                        <Caption weight="bold" uppercase color="secondary">Read/Write</Caption>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-[var(--text-secondary)] uppercase">Host Path / Source</span>
-                                            <span className="text-xs font-mono text-[var(--text-primary)] truncate" title={m.source || m.Name}>{m.source || m.Name || "-"}</span>
+                                            <Label variant="xs" color="secondary" uppercase>Host Path / Source</Label>
+                                            <Caption mono className="truncate" title={m.source || m.Name}>{m.source || m.Name || "-"}</Caption>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-[var(--text-secondary)] uppercase">Container Path</span>
-                                            <span className="text-xs font-mono text-[var(--text-primary)] truncate">{m.destination || m.Destination || "-"}</span>
+                                            <Caption weight="bold" color="secondary" uppercase className="text-[10px]">Container Path</Caption>
+                                            <Caption mono color="primary" className="truncate">{m.destination || m.Destination || "-"}</Caption>
                                         </div>
                                     </div>
                                 </div>
@@ -575,9 +577,9 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                                     const val = rest.join('=');
                                     return (
                                         <div key={i} className="flex items-start gap-2 bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)] group hover:bg-[var(--glass-bg)] transition-colors">
-                                            <span className="text-blue-400 w-32 shrink-0 truncate break-all" title={key}>{key}</span>
-                                            <span className="text-[var(--text-secondary)]">=</span>
-                                            <span className="text-green-400 break-all">{val}</span>
+                                            <Body color="accent" className="w-32 shrink-0 truncate break-all" title={key}>{key}</Body>
+                                            <Body color="secondary">=</Body>
+                                            <Body weight="bold" color="success" className="break-all">{val}</Body>
                                         </div>
                                     );
                                 })
@@ -590,15 +592,15 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
 
                 {/* Metadata & Labels */}
                 <Card className="overflow-hidden lg:col-span-2">
-                    <SectionHeader title="Metadata & Labels" icon={Tag} />
+                    <SectionHeader title="Metadata & Labels" icon={TagIcon} />
                     <div className="p-5">
                         <div className="flex flex-wrap gap-3">
                             {containerInfo.Labels && Object.keys(containerInfo.Labels).length > 0 ? (
                                 Object.entries(containerInfo.Labels).map(([key, value]) => (
-                                    <div key={key} className="flex items-center bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-full px-3 py-1.5 shadow-sm">
-                                        <span className="text-[10px] text-[var(--accent-primary)] font-bold mr-2 uppercase">{key}:</span>
-                                        <span className="text-xs font-mono text-[var(--text-primary)] truncate max-w-[200px]" title={value as string}>{value as string}</span>
-                                    </div>
+                                    <Tag key={key} variant="primary" className="py-2 px-3 gap-2 rounded-lg">
+                                        <Caption weight="bold" uppercase color="secondary" className="opacity-70">{key}:</Caption>
+                                        <Caption mono color="primary">{value as string}</Caption>
+                                    </Tag>
                                 ))
                             ) : (
                                 <div className="text-sm text-[var(--text-secondary)] italic">No labels assigned</div>
@@ -617,7 +619,7 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
             {/* Sidebar Filters */}
             <aside className="w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-color)] flex-col shrink-0 z-10 hidden lg:flex overflow-y-auto custom-scrollbar">
                 <div className="p-4 border-b border-[var(--border-color)]">
-                    <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Sources</h3>
+                    <H3 variant="xs" weight="bold" color="secondary" uppercase className="mb-3 tracking-wider">Sources</H3>
                     <div className="space-y-1">
                         <Checkbox
                             checked={true}
@@ -627,7 +629,7 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
                     </div>
                 </div>
                 <div className="p-4 flex-1">
-                    <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">Log Level</h3>
+                    <H3 variant="xs" weight="bold" color="secondary" uppercase className="mb-3 tracking-wider">Log Level</H3>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Button variant="glass" size="sm" className="flex-1">Info</Button>
@@ -652,9 +654,9 @@ function LogsTab({ containerName, logs, isLoadingLogs, logsEndRef, fetchLogs }: 
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20">
                             <div className={`size-2 rounded-full bg-[var(--accent-primary)] ${isLoadingLogs ? 'animate-pulse' : ''}`}></div>
-                            <span className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider">
+                            <Caption weight="semibold" color="accent" uppercase tracking="widest">
                                 {isLoadingLogs ? 'Streaming' : 'Loaded'}
-                            </span>
+                            </Caption>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -713,7 +715,7 @@ function FilesTerminalTab({
         <div className="flex-1 flex overflow-hidden">
             <aside className="w-80 flex flex-col border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex-shrink-0">
                 <div className="px-4 py-3 border-b border-[var(--border-color)] flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Filesystem</h3>
+                    <H3 variant="h3" weight="bold" color="primary" uppercase className="tracking-wider">Filesystem</H3>
                     <div className="flex gap-1">
                         <IconButton icon={CornerLeftUp} variant="ghost" size="sm" onClick={navigateUp} title="Navigate Up" />
                         <IconButton icon={Upload} variant="ghost" size="sm" title="Upload File" />
@@ -729,7 +731,7 @@ function FilesTerminalTab({
                 </div>
                 <div className="px-4 py-2 bg-[var(--bg-primary)] border-b border-[var(--border-color)] flex items-center gap-2 text-xs text-[var(--text-secondary)] font-mono overflow-hidden">
                     <Folder size={16} className="text-[var(--accent-primary)] shrink-0" />
-                    <span className="text-[var(--text-primary)] truncate" title={currentPath}>{currentPath}</span>
+                    <Caption mono className="truncate" title={currentPath}>{currentPath}</Caption>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
                     {files.length === 0 && !isLoadingFiles ? (
@@ -744,8 +746,8 @@ function FilesTerminalTab({
                                 >
                                     <ChevronRight size={14} className={`text-[var(--text-secondary)] ${!f.isDir && 'opacity-0'}`} />
                                     {f.isDir ? <Folder size={16} className="text-[var(--accent-primary)]" /> : <FileIcon size={16} className="text-[var(--text-secondary)]" />}
-                                    <span className="truncate flex-1" title={f.name}>{f.name}</span>
-                                    {!f.isDir && <span className="text-[10px] text-[var(--text-secondary)] opacity-0 group-hover:opacity-100">{f.size}</span>}
+                                    <Small className="truncate flex-1" title={f.name}>{f.name}</Small>
+                                    {!f.isDir && <Caption color="secondary" className="opacity-0 group-hover:opacity-100">{f.size}</Caption>}
                                 </div>
                             ))}
                         </div>
@@ -766,7 +768,7 @@ function FilesTerminalTab({
                                 style={{ minWidth: '140px', maxWidth: '200px' }}
                             >
                                 <Terminal size={14} className={activeTerminalId === tab.id ? 'text-[var(--accent-primary)]' : ''} />
-                                <span className="truncate flex-1">{tab.title}</span>
+                                <Small className="truncate flex-1">{tab.title}</Small>
                                 {terminalTabs.length > 1 && (
                                     <IconButton
                                         variant="ghost"

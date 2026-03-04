@@ -6,6 +6,7 @@ import styles from './BaseSelect.module.css';
 interface SelectOption {
     label: string;
     value: string;
+    icon?: React.ReactNode;
 }
 
 interface BaseSelectProps {
@@ -38,7 +39,12 @@ export default function BaseSelect({ label, options, value, onChange, placeholde
                                         <Select.ItemIndicator className={styles.ItemIndicator}>
                                             <Check size={14} className={styles.ItemIndicatorIcon} />
                                         </Select.ItemIndicator>
-                                        <Select.ItemText className={styles.ItemText}>{opt.label}</Select.ItemText>
+                                        <Select.ItemText className={styles.ItemText}>
+                                            <div className="flex items-center gap-2">
+                                                {opt.icon}
+                                                {opt.label}
+                                            </div>
+                                        </Select.ItemText>
                                     </Select.Item>
                                 ))}
                             </Select.List>

@@ -1,47 +1,46 @@
 import { useState, useEffect, useMemo } from "react";
 import {
     Database,
-    Trash2,
-    RefreshCw,
     Plus,
     HardDrive,
+    RefreshCw,
+    FileText,
     Image as ImageIcon,
     Cloud,
-    FileText
+    Trash2
 } from "lucide-react";
 import {
     listVolumes,
     createVolume,
-    removeVolume,
-    checkSystemStatus
+    removeVolume
 } from "../lib/container";
-import type {
-    VolumeInfo
-} from "../lib/container";
-import CreateVolumeModal from "../modals/CreateVolumeModal";
-import { NavBar } from "../components/NavBar";
-import "../Dashboard.css";
+import type { VolumeInfo } from "../lib/container";
+import { CreateVolumeModal } from "../modals/CreateVolumeModal";
 import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmDialog } from "../modals/Modal";
+import { useSystem } from "../contexts/SystemContext";
+import { PageMain } from "../components/PageMain";
+import { Tag } from "../components/Tag";
+import { H3, H4, Body, Small, Caption } from "../components/Typography";
 
 export default function VolumesPage() {
+    const { systemRunning } = useSystem();
     const [volumes, setVolumes] = useState<VolumeInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [systemRunning, setSystemRunning] = useState(false);
+
+    // Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [confirmDeleteName, setConfirmDeleteName] = useState<string | null>(null);
 
     const refreshData = async () => {
         setIsLoading(true);
         try {
-            const isRunning = await checkSystemStatus();
-            setSystemRunning(isRunning);
-            if (isRunning) {
-                const vols = await listVolumes();
-                setVolumes(vols);
+            if (systemRunning) {
+                const data = await listVolumes();
+                setVolumes(data);
             } else {
                 setVolumes([]);
             }
@@ -56,7 +55,7 @@ export default function VolumesPage() {
         refreshData();
         const interval = setInterval(refreshData, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [systemRunning]);
 
     const handleCreate = async (name: string) => {
         setActionLoading("create");
@@ -81,6 +80,7 @@ export default function VolumesPage() {
         setActionLoading("delete-" + name);
         try {
             await removeVolume(name);
+            setConfirmDeleteName(null);
             refreshData();
         } catch (e: any) {
             alert(e.message || String(e));
@@ -116,10 +116,8 @@ export default function VolumesPage() {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
-            <NavBar systemRunning={systemRunning} onSystemStop={refreshData} />
-
-            <main className="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full animate-fade-in font-display">
+        <PageMain
+            header={
                 <PageHeader
                     title="Volume Management"
                     description="Persistent storage buckets for stateful container persistence."
@@ -134,141 +132,122 @@ export default function VolumesPage() {
                         </Button>
                     }
                 />
+            }
+        >
 
-                {!systemRunning ? (
-                    <Card className="flex flex-col items-center justify-center py-20">
-                        <Database size={64} className="text-slate-400 dark:text-slate-600 mb-6 opacity-50" />
-                        <h2 className="text-2xl font-black tracking-tight mb-2 uppercase">Daemon Offline</h2>
-                        <p className="text-text-secondary font-medium">Please start the system to manage volumes.</p>
-                        <Button
-                            onClick={refreshData}
-                            loading={isLoading}
-                            icon={RefreshCw}
-                            className="mt-6"
-                        >
-                            Retry Connection
-                        </Button>
+            <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <Card className="flex items-center gap-5 p-6 group">
+                        <div className="p-4 bg-primary/10 rounded-2xl text-primary group-hover:scale-110 transition-transform">
+                            <HardDrive size={32} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Total Allocated</Caption>
+                            <div className="flex items-end gap-1.5">
+                                <H4 weight="black" tracking="tight" className="text-3xl leading-none">
+                                    {formatStorageGB(totalStorageBytes)}
+                                </H4>
+                                <Small weight="bold" color="secondary" className="pb-0.5">GB</Small>
+                            </div>
+                        </div>
                     </Card>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                            <Card className="flex items-center gap-5 p-6 group">
-                                <div className="p-4 bg-primary/10 rounded-2xl text-primary group-hover:scale-110 transition-transform">
-                                    <HardDrive size={32} strokeWidth={2.5} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Total Allocated</p>
-                                    <div className="flex items-end gap-1.5">
-                                        <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                                            {formatStorageGB(totalStorageBytes)}
-                                        </h4>
-                                        <span className="text-sm font-bold text-text-secondary pb-0.5">GB</span>
+
+                    <Card className="flex items-center gap-5 p-6 group">
+                        <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform">
+                            <RefreshCw size={32} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Active Drivers</Caption>
+                            <Body as="span" weight="black" background="primary" className="text-3xl leading-none">
+                                {activeDriversCount}
+                            </Body>
+                        </div>
+                    </Card>
+
+                    <Card className="flex items-center gap-5 p-6 group">
+                        <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
+                            <Plus size={32} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Unused Volumes</Caption>
+                            <H4 weight="black" tracking="tight" className="text-3xl leading-none">
+                                {unusedVolumesCount}
+                            </H4>
+                        </div>
+                    </Card>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {isLoading ? (
+                        <div className="col-span-full py-12 text-center text-text-secondary font-display italic animate-pulse">
+                            Enumerating logical volumes...
+                        </div>
+                    ) : volumes.length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-text-secondary font-display italic">
+                            No volumes initialized.
+                        </div>
+                    ) : (
+                        volumes.map((vol) => (
+                            <Card key={vol.name} className="p-0 overflow-hidden hover:border-primary/40 transition-colors">
+                                <div className="p-6 flex items-start justify-between">
+                                    <div className="flex items-center gap-5">
+                                        <div className="p-3 bg-slate-100 dark:bg-surface-border text-slate-600 dark:text-slate-400 rounded-xl shadow-inner group-hover:text-primary transition-colors">
+                                            {getVolumeIcon(vol)}
+                                        </div>
+                                        <div>
+                                            <H3 weight="bold" className="text-lg group-hover:text-primary transition-colors">
+                                                {vol.name}
+                                            </H3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <Tag variant="standard" className="uppercase tracking-widest">
+                                                    {vol.driver}
+                                                </Tag>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <IconButton
+                                            variant="ghost"
+                                            icon={Trash2}
+                                            size="sm"
+                                            onClick={() => handleDelete(vol.name)}
+                                            loading={actionLoading === "delete-" + vol.name}
+                                        />
                                     </div>
                                 </div>
-                            </Card>
-
-                            <Card className="flex items-center gap-5 p-6 group">
-                                <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform">
-                                    <RefreshCw size={32} strokeWidth={2.5} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Active Drivers</p>
-                                    <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                                        {activeDriversCount}
-                                    </h4>
+                                <div className="px-6 py-4 bg-slate-50/50 dark:bg-[#181818]/50 flex items-center justify-between border-t border-slate-600 dark:border-surface-border">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                        <Tag variant="success" className="uppercase tracking-widest border-transparent bg-transparent">Read / Write</Tag>
+                                    </div>
+                                    <Caption weight="black" color="accent" mono>
+                                        {formatStorageGB(vol.sizeInBytes || 0)} GB
+                                    </Caption>
                                 </div>
                             </Card>
-
-                            <Card className="flex items-center gap-5 p-6 group">
-                                <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
-                                    <Trash2 size={32} strokeWidth={2.5} />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-black text-text-secondary uppercase tracking-widest mb-1">Unused Volumes</p>
-                                    <h4 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                                        {unusedVolumesCount}
-                                    </h4>
-                                </div>
-                            </Card>
-                        </div>
-
-                        <Card className="p-0 overflow-hidden">
-                            <div className="overflow-x-auto custom-scrollbar">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-600 dark:border-surface-border">
-                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Volume Identity</th>
-                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Driver</th>
-                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary">Mount Source</th>
-                                            <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-text-secondary text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-600 dark:divide-surface-border">
-                                        {volumes.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={4} className="py-12 text-center text-text-secondary italic">No storage volumes detected</td>
-                                            </tr>
-                                        ) : (
-                                            volumes.map((vol) => (
-                                                <tr key={vol.name} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2 bg-slate-100 dark:bg-white/10 rounded text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">
-                                                                {getVolumeIcon(vol)}
-                                                            </div>
-                                                            <span className="font-bold text-slate-900 dark:text-white">{vol.name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/10 text-[10px] uppercase font-black text-text-secondary tracking-widest">
-                                                            {vol.driver}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-mono text-text-secondary truncate max-w-[300px]" title={vol.source}>
-                                                                {vol.source}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-right">
-                                                        <IconButton
-                                                            variant="ghost"
-                                                            icon={Trash2}
-                                                            title="Delete Volume"
-                                                            loading={actionLoading === "delete-" + vol.name}
-                                                            onClick={() => handleDelete(vol.name)}
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
-                    </>
-                )}
-            </main>
+                        ))
+                    )}
+                </div>
+            </>
 
             {isCreateModalOpen && (
                 <CreateVolumeModal
                     onClose={() => setIsCreateModalOpen(false)}
-                    onCreate={handleCreate}
-                    isCreating={actionLoading === "create"}
+                    onCreated={(name) => handleCreate(name)}
+                    isLoading={actionLoading === "create"}
                 />
             )}
 
             <ConfirmDialog
                 open={!!confirmDeleteName}
                 onOpenChange={(open) => !open && setConfirmDeleteName(null)}
-                title="Delete Volume"
-                description={`Are you sure you want to delete volume '${confirmDeleteName}'? This action cannot be undone.`}
-                confirmLabel="Delete Volume"
+                title="Remove Volume"
+                description={`Are you sure you want to remove the volume '${confirmDeleteName}'? All persistent data within this volume will be permanently lost.`}
+                confirmLabel="Destroy Volume"
                 onConfirm={confirmDelete}
                 variant="danger"
-                isLoading={actionLoading?.startsWith("delete-")}
+                isLoading={actionLoading === ("delete-" + confirmDeleteName)}
             />
-        </div>
+        </PageMain>
     );
 }

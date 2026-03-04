@@ -15,13 +15,6 @@ var staticFiles embed.FS
 
 // --- Types ---
 
-// StatusResponse represents the health status of the system.
-type StatusResponse struct {
-	Status    string `json:"status"`
-	Version   string `json:"version"`
-	Timestamp string `json:"timestamp"`
-}
-
 // App holds the application dependencies and state.
 type App struct {
 	actionLogs []CommandLog
@@ -55,27 +48,12 @@ func main() {
 
 	go app.logBroker.Start()
 
-	mux.HandleFunc("/api/status", app.handleStatus)
 	mux.HandleFunc("/api/containers/ws/", app.handleTerminalWS)
 	mux.HandleFunc("/api/containers/exec-stream/", app.handleExecStream)
 	mux.HandleFunc("/api/containers/exec/", app.handleExec)
 	mux.HandleFunc("/api/containers/logs/stream/", app.handleLogsSSE)
 	mux.HandleFunc("/api/containers/logs/", app.handleLogs)
 	mux.HandleFunc("/api/command", app.handleCommand)
-	mux.HandleFunc("/api/containers", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			app.handleListContainers(w, r)
-		} else {
-			app.handleCommand(w, r)
-		}
-	})
-	mux.HandleFunc("/api/images", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			app.handleListImages(w, r)
-		} else {
-			app.handleCommand(w, r)
-		}
-	})
 	mux.HandleFunc("/api/logs", app.handleActionLogs)
 	mux.HandleFunc("/api/stats", app.handleGetStats)
 	mux.HandleFunc("/api/logs/stream", app.logBroker.ServeHTTP)
@@ -83,43 +61,6 @@ func main() {
 	// --- Registry ---
 	mux.HandleFunc("/api/registry", app.handleRegistry)
 	mux.HandleFunc("/api/registry/login", app.handleRegistryLogin)
-
-	// --- System ---
-	mux.HandleFunc("/api/system/", app.handleSystemAction)
-	mux.HandleFunc("/api/system/properties", app.handleSystemProperties)
-
-	// --- Volumes ---
-	mux.HandleFunc("/api/volumes", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			output, err := app.runCli("volume", "ls", "--format", "json")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(output)
-		} else {
-			app.handleCommand(w, r)
-		}
-	})
-
-	// --- Networks ---
-	routeNetworks(mux, app)
-
-	// --- Builder ---
-	mux.HandleFunc("/api/builder/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			output, err := app.runCli("builder", "status", "--format", "json")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(output)
-		} else {
-			app.handleCommand(w, r)
-		}
-	})
 
 	// --- Dockerfiles ---
 	mux.HandleFunc("/api/dockerfiles", app.handleFindDockerfiles)
@@ -132,17 +73,9 @@ func main() {
 	mux.HandleFunc("/api/compose/parse", app.handleComposeParse)
 	mux.HandleFunc("/api/compose/discover", app.handleFindComposeFiles)
 
-	// Actions like start/stop
-	mux.HandleFunc("/api/containers/", func(w http.ResponseWriter, r *http.Request) {
-		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		if len(parts) == 4 {
-			app.handleContainerAction(w, r)
-		} else if r.Method == "DELETE" {
-			app.handleRemoveContainer(w, r)
-		} else {
-			http.NotFound(w, r)
-		}
-	})
+	// --- Resources (List only) ---
+	mux.HandleFunc("/api/containers", app.handleListContainers)
+	mux.HandleFunc("/api/images", app.handleListImages)
 
 	uiServe(mux)
 

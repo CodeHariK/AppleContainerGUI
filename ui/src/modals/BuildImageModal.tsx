@@ -2,6 +2,7 @@ import { Rocket, AlertTriangle } from "lucide-react";
 import { Modal } from "./Modal";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
+import { Text } from "../components/Typography";
 
 interface BuildImageModalProps {
     open: boolean;
@@ -35,9 +36,9 @@ export default function BuildImageModal({
                     onChange={(e) => setDockerfileToBuild(dockerfileToBuild ? { ...dockerfileToBuild, tag: e.target.value } : null)}
                     className="font-mono text-sm"
                 />
-                <p className="text-[11px] text-text-secondary px-1 mt-1 flex items-center gap-1">
+                <Text variant="xs" color="secondary" className="px-1 mt-1 flex items-center gap-1">
                     <AlertTriangle size={10} /> The tag must be lowercase and follow docker naming conventions.
-                </p>
+                </Text>
                 <div className="flex gap-3">
                     <Button variant="secondary" fullWidth onClick={() => onOpenChange(false)} disabled={isBuilding}>
                         Cancel

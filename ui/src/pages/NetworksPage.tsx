@@ -9,7 +9,6 @@ import {
 import {
     listNetworks,
     removeNetwork,
-    checkSystemStatus,
     listDnsDomains,
     deleteDnsDomain,
     listContainers
@@ -20,18 +19,20 @@ import type {
 } from "../lib/container";
 import { CreateNetworkModal } from "../modals/CreateNetworkModal";
 import { AddDnsModal } from "../modals/AddDnsModal";
-import { NavBar } from "../components/NavBar";
 import { Button, IconButton } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmDialog } from "../modals/Modal";
-import Offline from "./Offline";
+import { useSystem } from "../contexts/SystemContext";
+import { PageMain } from "../components/PageMain";
+import { Tag } from "../components/Tag";
+import { H2, H3, P, Small, Caption } from "../components/Typography";
 
 export default function NetworksPage() {
+    const { systemRunning } = useSystem();
     const [networks, setNetworks] = useState<NetworkInfo[]>([]);
     const [containers, setContainers] = useState<ContainerInfo[]>([]);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [systemRunning, setSystemRunning] = useState(false);
 
     // Modal States
     const [createNetOpen, setCreateNetOpen] = useState(false);
@@ -47,9 +48,7 @@ export default function NetworksPage() {
 
     const refreshData = async () => {
         try {
-            const isRunning = await checkSystemStatus();
-            setSystemRunning(isRunning);
-            if (isRunning) {
+            if (systemRunning) {
                 const [nets, conts] = await Promise.all([
                     listNetworks(),
                     listContainers()
@@ -83,13 +82,14 @@ export default function NetworksPage() {
         refreshData();
         const interval = setInterval(refreshData, 10000);
         return () => clearInterval(interval);
-    }, []);
+    }, [systemRunning]);
 
     const handleDelete = async (id: string, name: string) => {
         setConfirmDeleteNet({ id, name });
     };
 
     const confirmDeleteNetwork = async () => {
+        if (!confirmDeleteNetwork) return;
         if (!confirmDeleteNet) return;
         const { id } = confirmDeleteNet;
         setActionLoading(id);
@@ -166,10 +166,8 @@ export default function NetworksPage() {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col overflow-x-hidden text-slate-900 dark:text-slate-100">
-            <NavBar systemRunning={systemRunning} onSystemStop={refreshData} />
-
-            <main className="flex-1 px-4 md:px-10 py-8 max-w-[1400px] mx-auto w-full animate-fade-in font-display">
+        <PageMain
+            header={
                 <PageHeader
                     title="Network Infrastructure"
                     description="Manage virtual bridges, secure overlays, and local DNS discovery."
@@ -182,7 +180,6 @@ export default function NetworksPage() {
                                 icon={Plus}
                             >
                                 Create Network
-                                {actionLoading && <RefreshCw size={16} className="ml-2 animate-spin" />}
                             </Button>
                             <Button
                                 onClick={() => setAddDnsOpen(true)}
@@ -196,164 +193,161 @@ export default function NetworksPage() {
                         </>
                     }
                 />
+            }
+        >
 
-                {!systemRunning ? (
-                    <Offline />
+            <>
+                {networks.length === 0 ? (
+                    <Card className="text-center p-12 mb-8">
+                        <Network size={48} className="mx-auto mb-4 text-text-secondary opacity-50" />
+                        <H3 weight="medium" color="primary" className="text-center">No networks found.</H3>
+                        <P color="secondary" className="mt-1 text-center">Create one to isolate container traffic.</P>
+                    </Card>
                 ) : (
-                    <>
-                        {networks.length === 0 ? (
-                            <Card className="text-center p-12 mb-8">
-                                <Network size={48} className="mx-auto mb-4 text-text-secondary opacity-50" />
-                                <p className="text-slate-900 dark:text-white font-medium">No networks found.</p>
-                                <p className="text-text-secondary mt-1">Create one to isolate container traffic.</p>
-                            </Card>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-                                {networks.map(net => {
-                                    const isSystem = net.config?.labels?.["com.apple.container.resource.role"] === "builtin";
-                                    const driver = net.config?.pluginInfo?.plugin || "unknown";
-                                    const netTheme = getNetworkIconInfos(net.id, driver);
-                                    const Icon = netTheme.icon;
-                                    const connectedCount = countContainersForNetwork(net.id);
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                        {networks.map(net => {
+                            const isSystem = net.config?.labels?.["com.apple.container.resource.role"] === "builtin";
+                            const driver = net.config?.pluginInfo?.plugin || "unknown";
+                            const netTheme = getNetworkIconInfos(net.id, driver);
+                            const Icon = netTheme.icon;
+                            const connectedCount = countContainersForNetwork(net.id);
 
-                                    return (
-                                        <Card key={net.id} className={`p-0 transition-colors ${netTheme.borderHover} flex flex-col`}>
-                                            <div className="p-6 border-b border-slate-600 dark:border-surface-border flex-1">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`${netTheme.bg} ${netTheme.text} p-3 rounded-xl shadow-inner`}>
-                                                            <Icon size={24} strokeWidth={2.5} />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary transition-colors">
-                                                                {net.id}
-                                                            </h3>
-                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                <span className="text-[10px] uppercase font-black tracking-widest text-text-secondary">
-                                                                    {driver}
-                                                                </span>
-                                                                {isSystem && (
-                                                                    <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold border border-amber-500/20">
-                                                                        SYSTEM
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <IconButton
-                                                        variant="ghost"
-                                                        icon={Trash2}
-                                                        size="sm"
-                                                        disabled={isSystem}
-                                                        onClick={() => handleDelete(net.id, net.id)}
-                                                    />
+                            return (
+                                <Card key={net.id} className={`p-0 transition-colors ${netTheme.borderHover} flex flex-col group`}>
+                                    <div className="p-6 border-b border-slate-600 dark:border-surface-border flex-1">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`${netTheme.bg} ${netTheme.text} p-3 rounded-xl shadow-inner`}>
+                                                    <Icon size={24} strokeWidth={2.5} />
                                                 </div>
-
-                                                <div className="space-y-4">
-                                                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-600 dark:border-surface-border">
-                                                        <span className="text-xs text-text-secondary font-medium">Subnet Range</span>
-                                                        <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
-                                                            {net.status?.ipv4Subnet || "Not mapped"}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-600 dark:border-surface-border">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <span className="text-xs text-text-secondary font-medium uppercase tracking-tighter">Container Connectivity</span>
-                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                                                <span className="text-[10px] font-black">{connectedCount} ACTIVE</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {connectedCount === 0 ? (
-                                                                <span className="text-[10px] text-text-secondary italic">No endpoints attached</span>
-                                                            ) : (
-                                                                getContainersForNetwork(net.id).slice(0, 5).map(c => (
-                                                                    <div key={c.ID} className="group relative">
-                                                                        <div className="px-2 py-1 rounded bg-white dark:bg-surface-dark border border-slate-600 dark:border-surface-border text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                                                                            {c.Names.replace("/", "")}
-                                                                        </div>
-                                                                    </div>
-                                                                ))
-                                                            )}
-                                                            {connectedCount > 5 && (
-                                                                <div className="px-2 py-1 rounded bg-slate-200 dark:bg-white/10 text-[10px] font-black text-text-secondary">
-                                                                    +{connectedCount - 5} MORE
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                <div>
+                                                    <H3 weight="bold" className="text-lg group-hover:text-primary transition-colors">
+                                                        {net.id}
+                                                    </H3>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <Tag variant="standard" className="uppercase tracking-widest">
+                                                            {driver}
+                                                        </Tag>
+                                                        {isSystem && (
+                                                            <Tag variant="warning" className="font-bold">
+                                                                SYSTEM
+                                                            </Tag>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
+                                            <IconButton
+                                                variant="ghost"
+                                                icon={Trash2}
+                                                size="sm"
+                                                disabled={isSystem}
+                                                onClick={() => handleDelete(net.id, net.id)}
+                                            />
+                                        </div>
 
-                                            <div className="px-6 py-4 bg-slate-50/50 dark:bg-[#181818]/50 flex items-center justify-between border-t border-slate-600 dark:border-surface-border group-hover:bg-slate-100 dark:group-hover:bg-white/5 transition-colors">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">Bridged</span>
-                                                </div>
-                                                <span className="text-[10px] text-text-secondary font-mono">{net.id.substring(0, 12)}</span>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-600 dark:border-surface-border">
+                                                <Caption color="secondary" weight="medium">Subnet Range</Caption>
+                                                <Caption mono weight="bold" color="secondary">
+                                                    {net.status?.ipv4Subnet || "Not mapped"}
+                                                </Caption>
                                             </div>
-                                        </Card>
-                                    );
-                                })}
-                            </div>
-                        )}
 
-                        <Card className="p-0 overflow-hidden">
-                            <div className="p-6 border-b border-slate-600 dark:border-surface-border flex justify-between items-center">
-                                <div>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">DNS Discovery Domains</h2>
-                                    <p className="text-xs text-text-secondary mt-1 tracking-tight">Standard local hostname resolution paths</p>
-                                </div>
-                                <Button
-                                    onClick={loadDnsDomains}
-                                    variant="ghost"
-                                    size="sm"
-                                    icon={RefreshCw}
-                                    loading={isLoadingDns}
-                                />
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-600 dark:border-surface-border">
-                                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-text-secondary">Hostname Domain</th>
-                                            <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-text-secondary text-right">Operations</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-600 dark:divide-surface-border">
-                                        {dnsDomains.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={2} className="py-8 text-center text-sm text-text-secondary italic">No custom search domains configured</td>
-                                            </tr>
-                                        ) : (
-                                            dnsDomains.map(domain => (
-                                                <tr key={domain} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                                            <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-300">{domain}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-right">
-                                                        <IconButton
-                                                            variant="ghost"
-                                                            icon={Trash2}
-                                                            size="sm"
-                                                            onClick={() => handleDeleteDns(domain)}
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </Card>
-                    </>
+                                            <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-600 dark:border-surface-border">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <Caption color="secondary" weight="medium" uppercase tracking="tight">Container Connectivity</Caption>
+                                                    <Tag variant="primary" className="gap-1.5 py-1 px-2 border-transparent bg-transparent">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                                        <Caption weight="black" uppercase>{connectedCount} ACTIVE</Caption>
+                                                    </Tag>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {connectedCount === 0 ? (
+                                                        <Caption color="secondary" className="italic">No endpoints attached</Caption>
+                                                    ) : (
+                                                        getContainersForNetwork(net.id).slice(0, 5).map(c => (
+                                                            <div key={c.ID} className="group relative">
+                                                                <Tag variant="standard">
+                                                                    {c.Names.replace("/", "")}
+                                                                </Tag>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                    {connectedCount > 5 && (
+                                                        <Caption weight="black" color="secondary" background="subtle">
+                                                            +{connectedCount - 5} MORE
+                                                        </Caption>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="px-6 py-4 bg-slate-50/50 dark:bg-[#181818]/50 flex items-center justify-between border-t border-slate-600 dark:border-surface-border group-hover:bg-slate-100 dark:group-hover:bg-white/5 transition-colors">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                            <Tag variant="success" className="uppercase tracking-widest border-transparent bg-transparent">Bridged</Tag>
+                                        </div>
+                                        <Caption color="secondary" mono className="text-[10px]">{net.id.substring(0, 12)}</Caption>
+                                    </div>
+                                </Card>
+                            );
+                        })}
+                    </div>
                 )}
-            </main>
+
+                <Card className="p-0 overflow-hidden">
+                    <div className="p-6 border-b border-slate-600 dark:border-surface-border flex justify-between items-center">
+                        <div>
+                            <H2 weight="black" uppercase tracking="tight" className="text-xl">DNS Discovery Domains</H2>
+                            <Caption color="secondary" className="mt-1 tracking-tight">Standard local hostname resolution paths</Caption>
+                        </div>
+                        <Button
+                            onClick={loadDnsDomains}
+                            variant="ghost"
+                            size="sm"
+                            icon={RefreshCw}
+                            loading={isLoadingDns}
+                        />
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-600 dark:border-surface-border">
+                                    <th className="py-4 px-6"><Caption weight="black" uppercase tracking="widest" color="secondary">Hostname Domain</Caption></th>
+                                    <th className="py-4 px-6 text-right"><Caption weight="black" uppercase tracking="widest" color="secondary">Operations</Caption></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-600 dark:divide-surface-border">
+                                {dnsDomains.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={2} className="py-8 text-center text-sm text-text-secondary italic">No custom search domains configured</td>
+                                    </tr>
+                                ) : (
+                                    dnsDomains.map(domain => (
+                                        <tr key={domain} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                    <Small weight="bold" mono color="primary">{domain}</Small>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                <IconButton
+                                                    variant="ghost"
+                                                    icon={Trash2}
+                                                    size="sm"
+                                                    onClick={() => handleDeleteDns(domain)}
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            </>
 
             {createNetOpen && (
                 <CreateNetworkModal
@@ -396,6 +390,6 @@ export default function NetworksPage() {
                 variant="danger"
                 isLoading={actionLoading === ("delete-dns-" + confirmDeleteDns)}
             />
-        </div>
+        </PageMain>
     );
 }

@@ -1,0 +1,189 @@
+/* Standardized Typography Styles */
+
+:root {
+    /* Typography Tokens */
+    --font-heading: 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Heading Classes */
+.heading-base {
+    font-family: var(--font-heading);
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.heading-h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    tracking: -0.04em;
+}
+
+.heading-h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    tracking: -0.03em;
+    text-transform: uppercase;
+}
+
+.heading-h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    tracking: -0.02em;
+}
+
+.heading-h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.heading-h5 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.heading-h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Text Variants */
+.text-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    opacity: 0.6;
+}
+
+.text-detail {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.text-xs {
+    font-size: 0.625rem;
+}
+
+.text-small {
+    font-size: 0.8125rem;
+}
+
+.text-mono {
+    font-family: var(--font-mono);
+}
+
+.text-uppercase {
+    text-transform: uppercase;
+}
+
+.text-tracking-widest {
+    letter-spacing: 0.1em;
+}
+
+.text-tracking-tight {
+    letter-spacing: -0.01em;
+}
+
+.text-tracking-tighter {
+    letter-spacing: -0.02em;
+}
+
+/* Font Weights */
+.font-normal {
+    font-weight: 400;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-extrabold {
+    font-weight: 800;
+}
+
+.font-black {
+    font-weight: 950;
+}
+
+/* Label Styles */
+.label-base {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+/* Utilities for interaction */
+.text-transition {
+    transition: all 0.2s ease;
+}
+
+.text-primary-hover:hover {
+    color: var(--accent-primary);
+}
+
+/* Background Utilities */
+.text-bg-subtle {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+}
+
+.dark .text-bg-subtle {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.text-bg-primary {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+}
+
+.text-bg-accent {
+    background: var(--accent-primary);
+    color: white;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+}
+
+.text-bg-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+}
+
+.text-bg-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+}
+
+.text-bg-glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+    border: 1px solid var(--glass-border);
+}

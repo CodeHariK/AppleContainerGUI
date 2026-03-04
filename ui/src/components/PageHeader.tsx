@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { Heading, Text } from './Typography';
 
 interface PageHeaderProps {
     title: string;
@@ -25,13 +26,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     </div>
                 )}
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <Heading level={2} className="text-slate-900 dark:text-white">
                         {title}
-                    </h1>
+                    </Heading>
                     {description && (
-                        <p className="mt-1 text-slate-500 dark:text-text-secondary font-medium">
+                        <Text as="p" variant="body" weight="medium" color="secondary" className="mt-1">
                             {description}
-                        </p>
+                        </Text>
                     )}
                 </div>
             </div>

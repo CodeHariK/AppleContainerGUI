@@ -4,6 +4,7 @@ import { useCommandLog } from "../contexts/CommandLogContext";
 import { Trash2, Terminal, ChevronRight } from "lucide-react";
 import TerminalView from "../components/TerminalView";
 import { IconButton } from "../components/Button";
+import { Text } from "../components/Typography";
 
 export default function CommandLogOverlay() {
     const { logs, clearLogs } = useCommandLog();
@@ -37,7 +38,7 @@ export default function CommandLogOverlay() {
                     {logs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-70">
                             <Terminal size={48} className="mb-4" />
-                            <p>No commands executed yet.</p>
+                            <Text color="secondary">No commands executed yet.</Text>
                         </div>
                     ) : (
                         <div className="flex flex-col-reverse gap-2">
@@ -46,11 +47,11 @@ export default function CommandLogOverlay() {
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="flex items-center gap-2 font-medium" style={{ color: log.isError ? '#ef4444' : 'var(--accent-primary)' }}>
                                             <ChevronRight size={14} />
-                                            <span className="text-xs">{log.command}</span>
+                                            <Text variant="xs" weight="medium" style={{ color: 'inherit' }}>{log.command}</Text>
                                         </div>
-                                        <span className="text-text-secondary text-[10px]">
+                                        <Text variant="xs" color="secondary" className="text-[10px]">
                                             {new Date(log.timestamp).toLocaleTimeString()}
-                                        </span>
+                                        </Text>
                                     </div>
                                     <div className="text-text-primary opacity-90 text-xs leading-relaxed">
                                         <TerminalView
@@ -65,7 +66,7 @@ export default function CommandLogOverlay() {
                 </div>
 
                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-light dark:border-border-dark text-[10px] text-text-secondary">
-                    <span>Press ` to toggle</span>
+                    <Text variant="xs" color="secondary">Press ` to toggle</Text>
                     <IconButton
                         variant="ghost"
                         onClick={clearLogs}

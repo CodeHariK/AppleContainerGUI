@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Input as BaseInput } from '@base-ui/react/input';
 import type { LucideIcon } from 'lucide-react';
+import { Label } from "./Typography";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -13,9 +14,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className={`flex flex-col gap-1.5 w-full ${containerClassName || ''}`}>
                 {label && (
-                    <label className="text-xs font-medium text-slate-500 dark:text-text-secondary pl-1">
+                    <Label variant="xs" color="secondary" className="pl-1 leading-none">
                         {label}
-                    </label>
+                    </Label>
                 )}
                 <div className="relative group">
                     {Icon && (

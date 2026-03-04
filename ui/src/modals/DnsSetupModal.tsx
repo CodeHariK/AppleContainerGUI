@@ -1,6 +1,7 @@
 import { RefreshCw } from "lucide-react";
 import { Modal } from "./Modal";
 import { Button, IconButton } from "../components/Button";
+import { Text } from "../components/Typography";
 
 interface DnsSetupModalProps {
     open: boolean;
@@ -16,9 +17,9 @@ export default function DnsSetupModal({
     return (
         <Modal open={open} onOpenChange={onOpenChange} title="Local DNS Configuration">
             <div className="flex flex-col gap-4">
-                <p className="text-sm text-text-secondary leading-relaxed">
+                <Text variant="small" color="secondary" className="leading-relaxed">
                     To enable direct service access via <b>*.{projectName}.local</b>, run the following command in your terminal:
-                </p>
+                </Text>
                 <div className="bg-black/90 p-4 rounded-xl font-mono text-sm text-primary border border-primary/20 flex items-center justify-between group">
                     <code>sudo container system dns create {projectName}</code>
                     <IconButton

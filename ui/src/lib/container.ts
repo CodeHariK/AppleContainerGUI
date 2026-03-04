@@ -1,7 +1,6 @@
 // Browser-side library for interacting with the Cider Go Backend
 import {
     buildPullCommand,
-    buildRemoveImageCommand,
     buildVolumeCreateCommand,
     buildNetworkCreateCommand,
     buildDnsCreateCommand,
@@ -108,25 +107,24 @@ export interface CommandLog {
 
 export async function checkSystemStatus(): Promise<boolean> {
     try {
-        const res = await fetch(`${API_BASE}/status`);
-        if (!res.ok) return false;
-        const data = await res.json();
-        return data.status === "ok";
+        const { output } = await runRawCommand("container system status --format json", { noTty: true });
+        const data = JSON.parse(output);
+        return data.status === "ok" || data.status === "running";
     } catch {
         return false;
     }
 }
 
 export async function startSystem(): Promise<void> {
-    await fetch(`${API_BASE}/system/start`, { method: "POST" });
+    await runRawCommand("container system start");
 }
 
 export async function stopSystem(): Promise<void> {
-    await fetch(`${API_BASE}/system/stop`, { method: "POST" });
+    await runRawCommand("container system stop");
 }
 
 export async function pruneSystem(): Promise<void> {
-    await fetch(`${API_BASE}/system/prune`, { method: "POST" });
+    await runRawCommand("container prune");
 }
 
 export async function getActionLogs(): Promise<CommandLog[]> {
@@ -195,27 +193,20 @@ export async function createContainer(command: string): Promise<void> {
 }
 
 export async function startContainer(command: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
-    if (!response.ok) throw new Error(await response.text() || `Failed to start container`);
+    await runRawCommand(command);
 }
 
 export async function stopContainer(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/containers/${id}/stop`, { method: "POST" });
-    if (!res.ok) throw new Error(await res.text() || `Failed to stop container ${id}`);
+    await runRawCommand(`container stop ${id}`);
 }
 
 export async function restartContainer(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/containers/${id}/restart`, { method: "POST" });
-    if (!res.ok) throw new Error(await res.text() || `Failed to restart container ${id}`);
+    await stopContainer(id);
+    await startContainer(`container start ${id}`);
 }
 
 export async function removeContainer(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/containers/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text() || `Failed to remove container ${id}`);
+    await runRawCommand(`container rm --force ${id}`);
 }
 
 export async function getContainerLogs(id: string, lines = 100): Promise<string> {
@@ -344,13 +335,11 @@ export async function pullImage(reference: string): Promise<void> {
 }
 
 export async function deleteImage(reference: string): Promise<void> {
-    const command = buildRemoveImageCommand(reference);
-    const res = await fetch(`${API_BASE}/images`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
-    if (!res.ok) throw new Error(await res.text());
+    await runRawCommand(`container image rm --force ${reference}`);
+}
+
+export async function pruneImages(): Promise<void> {
+    await runRawCommand("container image prune --all");
 }
 
 export async function buildImage(command: string): Promise<void> {
@@ -393,8 +382,8 @@ export async function tagImage(name: string, tag: string): Promise<void> {
 
 export async function listVolumes(): Promise<VolumeInfo[]> {
     try {
-        const res = await fetch(`${API_BASE}/volumes`);
-        const data = await res.json();
+        const { output } = await runRawCommand("container volume ls --format json", { noTty: true });
+        const data = JSON.parse(output);
         return Array.isArray(data) ? data : [];
     } catch {
         return [];
@@ -403,26 +392,19 @@ export async function listVolumes(): Promise<VolumeInfo[]> {
 
 export async function createVolume(name: string): Promise<void> {
     const command = buildVolumeCreateCommand(name);
-    const response = await fetch(`${API_BASE}/command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
-    if (!response.ok) throw new Error(await response.text() || "Failed to create volume");
+    await runRawCommand(command);
 }
 
 export async function removeVolume(name: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/volumes/${name}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text() || "Failed to remove volume");
+    await runRawCommand(`container volume rm ${name}`);
 }
 
 // --- Networks ---
 
 export async function listNetworks(): Promise<NetworkInfo[]> {
     try {
-        const res = await fetch(`${API_BASE}/networks`);
-        if (!res.ok) return [];
-        const data = await res.json();
+        const { output } = await runRawCommand("container network ls --format json", { noTty: true });
+        const data = JSON.parse(output);
         return Array.isArray(data) ? data : [];
     } catch {
         return [];
@@ -431,26 +413,19 @@ export async function listNetworks(): Promise<NetworkInfo[]> {
 
 export async function createNetwork(name: string, driver?: string): Promise<void> {
     const command = buildNetworkCreateCommand(name, driver);
-    const response = await fetch(`${API_BASE}/command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
-    if (!response.ok) throw new Error(await response.text() || "Failed to create network");
+    await runRawCommand(command);
 }
 
 export async function removeNetwork(name: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/networks/${name}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text() || "Failed to remove network");
+    await runRawCommand(`container network rm ${name}`);
 }
 
 // --- Builder ---
 
 export async function getBuilderStatus(): Promise<BuilderStatus | null> {
     try {
-        const res = await fetch(`${API_BASE}/builder`);
-        if (!res.ok) return null;
-        const raw = await res.json();
+        const { output } = await runRawCommand("container builder status --format json", { noTty: true });
+        const raw = JSON.parse(output);
         const b = Array.isArray(raw) ? raw[0] : raw;
         if (!b) return null;
         return {
@@ -467,29 +442,15 @@ export async function getBuilderStatus(): Promise<BuilderStatus | null> {
 
 export async function startBuilder(cpus?: number, memory?: string): Promise<void> {
     const command = buildBuilderStartCommand(cpus, memory);
-    await fetch(`${API_BASE}/builder/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
+    await runRawCommand(command);
 }
 
 export async function stopBuilder(): Promise<void> {
-    const command = "container builder stop";
-    await fetch(`${API_BASE}/builder/stop`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
+    await runRawCommand("container builder stop");
 }
 
 export async function deleteBuilder(): Promise<void> {
-    const command = "container builder delete";
-    await fetch(`${API_BASE}/builder/delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
-    });
+    await runRawCommand("container builder rm --force");
 }
 
 // --- Registry ---
@@ -526,9 +487,8 @@ export async function registryLogout(server: string): Promise<void> {
 
 export async function listSystemProperties(): Promise<SystemProperty[]> {
     try {
-        const res = await fetch(`${API_BASE}/system/properties`);
-        if (!res.ok) return [];
-        const data = await res.json();
+        const { output } = await runRawCommand("container system property list --format json", { noTty: true });
+        const data = JSON.parse(output);
         const rawProps: any[] = Array.isArray(data) ? data : [];
         return rawProps.map(p => ({
             ID: p.id || p.ID || "",
@@ -676,11 +636,11 @@ export async function discoverComposeFiles(baseDir?: string): Promise<{ path: st
     return await response.json();
 }
 
-export async function runRawCommand(command: string): Promise<{ output: string }> {
+export async function runRawCommand(command: string, options?: { noTty?: boolean }): Promise<{ output: string }> {
     const response = await fetch(`${API_BASE}/command`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command })
+        body: JSON.stringify({ command, noTty: options?.noTty })
     });
 
     const data = await response.json();

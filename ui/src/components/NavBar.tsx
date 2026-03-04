@@ -1,21 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
-import { startSystem, stopSystem } from "../lib/container";
 import { IconButton } from "./Button";
 import { Play, StopCircle, Settings } from "lucide-react";
+import { useSystem } from "../contexts/SystemContext";
+import { H2, Small } from "./Typography";
 
-interface NavBarProps {
-    systemRunning: boolean;
-    onSystemStart?: () => void;
-    onSystemStop?: () => void;
-}
-
-export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarProps) {
+export function NavBar() {
+    const { systemRunning, start, stop } = useSystem();
     const location = useLocation();
 
     const handleStart = async () => {
         try {
-            await startSystem();
-            if (onSystemStart) onSystemStart();
+            await start();
         } catch (e) {
             console.error(e);
         }
@@ -23,15 +18,19 @@ export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarPro
 
     const handleStop = async () => {
         try {
-            await stopSystem();
-            if (onSystemStop) onSystemStop();
+            await stop();
         } catch (e) {
             console.error(e);
         }
     };
 
-    const navLinks = [
-        { path: '/', label: 'Containers', matchPaths: ['/', '/container/'] },
+    interface NavLink {
+        path: string;
+        label: string;
+        matchPaths?: string[];
+    }
+
+    const navLinks: NavLink[] = [
         { path: '/images', label: 'Images' },
         { path: '/volumes', label: 'Volumes' },
         { path: '/networks', label: 'Networks' },
@@ -48,11 +47,13 @@ export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarPro
     return (
         <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-surface-border px-6 md:px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50 transition-colors">
             <div className="flex items-center gap-4 dark:text-white text-slate-900">
-                <div className="size-8 text-primary flex items-center justify-center">
-                    <span className="material-symbols-outlined text-3xl">deployed_code</span>
-                </div>
+                <Link to="/" className="flex items-center gap-4 hover:text-primary transition-colors group">
+                    <div className="size-8 text-primary flex items-center justify-center">
+                        <span className="material-symbols-outlined text-3xl transition-transform group-hover:scale-110">deployed_code</span>
+                    </div>
 
-                <h2 className="text-lg font-semibold leading-tight tracking-[-0.015em] hidden sm:block">Apple Cider</h2>
+                    <H2 weight="semibold" className="text-lg leading-tight tracking-[-0.015em] hidden sm:block">Apple Cider</H2>
+                </Link>
 
                 {systemRunning ? (
                     <IconButton
@@ -83,10 +84,11 @@ export function NavBar({ systemRunning, onSystemStart, onSystemStop }: NavBarPro
                             return (
                                 <Link
                                     key={link.path}
-                                    className={`text-sm leading-normal transition-colors ${active ? 'font-bold text-primary' : 'hover:text-primary text-slate-500'}`}
                                     to={link.path}
                                 >
-                                    {link.label}
+                                    <Small weight={active ? 'bold' : 'normal'} color={active ? 'primary' : 'secondary'} className="leading-normal">
+                                        {link.label}
+                                    </Small>
                                 </Link>
                             );
                         })}

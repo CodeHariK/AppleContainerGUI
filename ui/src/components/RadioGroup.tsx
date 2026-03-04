@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { RadioGroup as BaseRadioGroup } from '@base-ui/react/radio-group';
 import { Radio as BaseRadio } from '@base-ui/react/radio';
+import { Text } from './Typography';
 
 interface RadioGroupProps extends React.ComponentPropsWithoutRef<typeof BaseRadioGroup> {
     label?: string;
@@ -17,9 +18,9 @@ export const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupProps>(
                 {...props}
             >
                 {label && (
-                    <span className="text-sm font-medium text-slate-900 dark:text-white mb-1">
+                    <Text variant="small" weight="medium" className="mb-1">
                         {label}
-                    </span>
+                    </Text>
                 )}
                 {children}
             </BaseRadioGroup>
@@ -49,13 +50,13 @@ export const Radio = React.forwardRef<HTMLButtonElement, RadioProps>(
             >
                 <span className="flex flex-1">
                     <span className="flex flex-col text-left">
-                        <span className="block text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+                        <Text variant="small" weight="bold" className="block group-hover:text-primary transition-colors">
                             {label}
-                        </span>
+                        </Text>
                         {description && (
-                            <span className="mt-1 flex items-center text-xs text-slate-500 dark:text-text-secondary">
+                            <Text variant="xs" color="secondary" className="mt-1 flex items-center">
                                 {description}
-                            </span>
+                            </Text>
                         )}
                     </span>
                 </span>

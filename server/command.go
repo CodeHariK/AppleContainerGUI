@@ -172,15 +172,26 @@ func (a *App) handleLogsSSE(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// logAction logs a command action without partial output support.
-func (a *App) logAction(command string, output string, isError bool) {
-	a.logActionExt(fmt.Sprintf("%d", time.Now().UnixNano()), command, output, isError, false)
+// logAction logs a command action. If exeID is empty, a new one is generated.
+func (a *App) logAction(exeID string, command string, output string, isError bool) {
+	if exeID == "" {
+		exeID = fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	a.logActionExt(exeID, command, output, isError, false)
 }
 
 // logActionExt logs a command action with optional partial output and filtering.
 func (a *App) logActionExt(exeID string, command string, output string, isError bool, isPartial bool) {
-	// Simple noise filtering similar to original JS implementation
-	if strings.Contains(command, "ls --all") || strings.Contains(command, "image list") || strings.Contains(command, "top") || strings.Contains(command, "stats") {
+	// Simple noise filtering for background/polling commands
+	if strings.Contains(command, "ls --all") ||
+		strings.Contains(command, "image list") ||
+		strings.Contains(command, "network ls") ||
+		strings.Contains(command, "volume ls") ||
+		strings.Contains(command, "inspect") ||
+		strings.Contains(command, "top") ||
+		strings.Contains(command, "stats") ||
+		strings.Contains(command, "ps --all") ||
+		strings.Contains(command, "system status") {
 		if !isError {
 			return
 		}
@@ -224,7 +235,7 @@ func (a *App) runCli(args ...string) ([]byte, error) {
 	stderr, _ := cmd.StderrPipe()
 
 	if err := cmd.Start(); err != nil {
-		a.logAction(fullCmd, fmt.Sprintf("Error: %v", err), true)
+		a.logAction(exeID, fullCmd, fmt.Sprintf("Error: %v", err), true)
 		return nil, err
 	}
 
@@ -257,9 +268,9 @@ func (a *App) runCli(args ...string) ([]byte, error) {
 	err := cmd.Wait()
 
 	if err != nil {
-		a.logAction(fullCmd, fmt.Sprintf("Command failed: %v", err), true)
+		a.logAction(exeID, fullCmd, fmt.Sprintf("Command failed: %v", err), true)
 	} else {
-		a.logAction(fullCmd, "Command completed successfully", false)
+		a.logAction(exeID, fullCmd, "Command completed successfully", false)
 	}
 
 	return outBuf.Bytes(), err
@@ -273,7 +284,7 @@ func (a *App) runCliTTY(args ...string) ([]byte, error) {
 
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: 24, Cols: 80})
 	if err != nil {
-		a.logAction(fullCmd, fmt.Sprintf("Error starting PTY: %v", err), true)
+		a.logAction(exeID, fullCmd, fmt.Sprintf("Error starting PTY: %v", err), true)
 		return nil, err
 	}
 	defer f.Close()
@@ -305,9 +316,9 @@ func (a *App) runCliTTY(args ...string) ([]byte, error) {
 	err = cmd.Wait()
 
 	if err != nil {
-		a.logAction(fullCmd, fmt.Sprintf("Command failed: %v", err), true)
+		a.logAction(exeID, fullCmd, fmt.Sprintf("Command failed: %v", err), true)
 	} else {
-		a.logAction(fullCmd, "Command completed successfully", false)
+		a.logAction(exeID, fullCmd, "Command completed successfully", false)
 	}
 
 	return outBuf.Bytes(), err
@@ -338,27 +349,34 @@ func parseCommand(cmdStr string) []string {
 
 // handleCommand is an HTTP handler to execute CLI commands via POST or DELETE requests.
 func (a *App) handleCommand(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	if r.Method != "POST" && r.Method != "DELETE" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req struct {
 		Command string `json:"command"`
+		NoTTY   bool   `json:"noTty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	args := strings.Fields(req.Command)
+	args := parseCommand(req.Command)
 	if len(args) == 0 || args[0] != "container" {
 		http.Error(w, "invalid command: must start with 'container'", http.StatusBadRequest)
 		return
 	}
 
-	// Use the TTY version for user-initiated commands so they stream nicely to xterm
-	output, err := a.runCliTTY(args[1:]...)
+	var output []byte
+	var err error
+	if req.NoTTY {
+		output, err = a.runCli(args[1:]...)
+	} else {
+		// Use the TTY version for user-initiated commands so they stream nicely to xterm
+		output, err = a.runCliTTY(args[1:]...)
+	}
 	if err != nil {
 		http.Error(w, string(output), http.StatusInternalServerError)
 		return

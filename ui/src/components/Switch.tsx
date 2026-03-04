@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Switch as BaseSwitch } from '@base-ui/react/switch';
+import { Text } from './Typography';
 
 interface SwitchProps extends React.ComponentPropsWithoutRef<typeof BaseSwitch.Root> {
     label?: string;
@@ -35,14 +36,14 @@ export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
                 {(label || description) && (
                     <div className="flex flex-col">
                         {label && (
-                            <span className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+                            <Text variant="small" weight="medium" className="group-hover:text-primary transition-colors">
                                 {label}
-                            </span>
+                            </Text>
                         )}
                         {description && (
-                            <span className="text-xs text-slate-500 dark:text-text-secondary">
+                            <Text variant="xs" color="secondary">
                                 {description}
-                            </span>
+                            </Text>
                         )}
                     </div>
                 )}

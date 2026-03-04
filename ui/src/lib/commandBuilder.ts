@@ -140,7 +140,7 @@ export function buildNetworkCreateCommand(name: string, driver?: string): string
 }
 
 export function buildDnsCreateCommand(domain: string): string {
-    return `container dns create ${domain}`;
+    return `container system dns create ${domain}`;
 }
 
 export function buildBuilderStartCommand(cpus?: number, memory?: string): string {

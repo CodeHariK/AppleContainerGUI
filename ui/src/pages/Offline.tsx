@@ -1,12 +1,14 @@
-import { Card } from "../components/Card";
-import { CloudOff } from "lucide-react";
+import { Power } from "lucide-react";
+import { Body } from "../components/Typography";
 
 export default function Offline() {
     return (
-        <Card className="text-center p-12">
-            <CloudOff size={48} className="mx-auto mb-4 text-text-secondary opacity-50" />
-            <p className="text-slate-900 dark:text-white font-medium">The container daemon is offline.</p>
-            <p className="text-text-secondary mt-1">Start the system to manage containers.</p>
-        </Card>
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8">
+            <div className="size-16 rounded-full bg-slate-100 dark:bg-surface-border flex items-center justify-center text-slate-400 mb-6">
+                <Power size={32} />
+            </div>
+            <Body weight="medium">The container daemon is offline.</Body>
+            <Body color="secondary" className="mt-1">Start the system to manage containers.</Body>
+        </div>
     );
 }

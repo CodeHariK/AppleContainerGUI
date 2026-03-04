@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { Heading, Text } from './Typography';
 
 interface SectionHeaderProps {
     title: string;
@@ -21,13 +22,13 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             <div className="flex items-center gap-2">
                 {Icon && <Icon size={18} className="text-primary" />}
                 <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                    <Heading level={3} className="text-slate-900 dark:text-white">
                         {title}
-                    </h3>
+                    </Heading>
                     {description && (
-                        <p className="text-sm text-slate-500 dark:text-text-secondary mt-0.5">
+                        <Text as="p" variant="small" color="secondary" weight="medium" className="mt-0.5">
                             {description}
-                        </p>
+                        </Text>
                     )}
                 </div>
             </div>

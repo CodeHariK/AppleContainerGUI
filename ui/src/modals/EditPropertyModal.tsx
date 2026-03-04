@@ -4,6 +4,7 @@ import { Save, RotateCcw } from "lucide-react";
 import { Input } from "../components/Input";
 import { Switch } from "../components/Switch";
 import { Modal } from "./Modal";
+import { Text, Label } from "../components/Typography";
 import "../Dashboard.css";
 import { setSystemProperty } from "../lib/container";
 import type { SystemProperty } from "../lib/container";
@@ -35,14 +36,14 @@ export function EditPropertyModal({ property, onClose, onSaved }: Props) {
             onOpenChange={(open) => !open && onClose()}
             title="Edit Property"
         >
-            <div className="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-6 leading-relaxed">
+            <Text color="secondary" className="mb-6 leading-relaxed">
                 {property.Description}
-            </div>
+            </Text>
 
             <div className="mb-8">
-                <label className="block text-sm font-semibold text-text-primary-light dark:text-text-primary-dark mb-2">
-                    {property.ID} <span className="text-text-secondary-light dark:text-text-secondary-dark font-normal">({property.Type})</span>
-                </label>
+                <Label variant="body" weight="semibold" className="block mb-2">
+                    {property.ID} <Text variant="small" color="secondary" weight="normal">({property.Type})</Text>
+                </Label>
 
                 {property.Type === "Bool" ? (
                     <Switch

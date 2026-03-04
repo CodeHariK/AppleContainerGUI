@@ -8,26 +8,29 @@ import RegistriesPage from "./pages/RegistriesPage";
 import SettingsPage from "./pages/SettingsPage";
 
 import { CommandLogProvider } from "./contexts/CommandLogContext";
+import { SystemProvider } from "./contexts/SystemContext";
 import CommandLogOverlay from "./modals/CommandLogOverlay";
 
 function App() {
   return (
-    <CommandLogProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/images" element={<ImagesPage />} />
-          <Route path="/volumes" element={<VolumesPage />} />
-          <Route path="/networks" element={<NetworksPage />} />
-          <Route path="/container/:id" element={<ContainerDetailsPage />} />
-          <Route path="/registries" element={<RegistriesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          {/* We'll add remaining pages later */}
-          <Route path="*" element={<Dashboard />} />
-        </Routes>
-      </Router>
-      <CommandLogOverlay />
-    </CommandLogProvider>
+    <SystemProvider>
+      <CommandLogProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/images" element={<ImagesPage />} />
+            <Route path="/volumes" element={<VolumesPage />} />
+            <Route path="/networks" element={<NetworksPage />} />
+            <Route path="/container/:id" element={<ContainerDetailsPage />} />
+            <Route path="/registries" element={<RegistriesPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            {/* We'll add remaining pages later */}
+            <Route path="*" element={<Dashboard />} />
+          </Routes>
+        </Router>
+        <CommandLogOverlay />
+      </CommandLogProvider>
+    </SystemProvider>
   );
 }
 

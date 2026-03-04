@@ -7,16 +7,16 @@ import "../Dashboard.css";
 
 interface Props {
     onClose: () => void;
-    onCreate: (name: string) => void;
-    isCreating: boolean;
+    onCreated: (name: string) => void;
+    isLoading: boolean;
 }
 
-export default function CreateVolumeModal({ onClose, onCreate, isCreating }: Props) {
+export function CreateVolumeModal({ onClose, onCreated, isLoading }: Props) {
     const [name, setName] = useState("");
 
     const handleCreate = () => {
         if (!name.trim()) return;
-        onCreate(name.trim());
+        onCreated(name.trim());
     };
 
     return (
@@ -38,11 +38,11 @@ export default function CreateVolumeModal({ onClose, onCreate, isCreating }: Pro
             </div>
 
             <div className="flex-right pb-2" style={{ gap: "12px", display: "flex", justifyContent: "flex-end" }}>
-                <Button variant="secondary" onClick={onClose} disabled={isCreating}>Cancel</Button>
+                <Button variant="secondary" onClick={onClose} disabled={isLoading}>Cancel</Button>
                 <Button
                     variant="primary"
                     onClick={handleCreate}
-                    loading={isCreating}
+                    loading={isLoading}
                 >
                     Create Volume
                 </Button>

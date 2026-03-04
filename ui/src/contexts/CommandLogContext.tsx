@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { Toast } from "@base-ui/react/toast";
 import type { CommandLog } from "../lib/container";
 import { getActionLogs, clearActionLogs as apiClearActionLogs } from "../lib/container";
 
@@ -11,8 +10,6 @@ interface CommandLogContextType {
 }
 
 const CommandLogContext = createContext<CommandLogContextType | undefined>(undefined);
-
-const toastManager = Toast.createToastManager();
 
 export function CommandLogProvider({ children }: { children: ReactNode }) {
     const [logs, setLogs] = useState<CommandLog[]>([]);
@@ -45,26 +42,34 @@ export function CommandLogProvider({ children }: { children: ReactNode }) {
                 const logEntry: CommandLog = JSON.parse(event.data);
 
                 setLogs(prev => {
-                    // If it's partial, we might want to update the latest log if it's the same command execution
-                    if (logEntry.isPartial && prev.length > 0 && prev[0].exeId === logEntry.exeId) {
+                    const existingIndex = prev.findIndex(l => l.exeId === logEntry.exeId);
+
+                    if (existingIndex !== -1) {
                         const newLogs = [...prev];
-                        newLogs[0] = {
-                            ...newLogs[0],
-                            output: newLogs[0].output + logEntry.output
-                        };
+                        const existing = newLogs[existingIndex];
+
+                        if (logEntry.isPartial) {
+                            newLogs[existingIndex] = {
+                                ...existing,
+                                output: (existing.output || "") + logEntry.output
+                            };
+                        } else {
+                            // Final status - update the whole entry
+                            newLogs[existingIndex] = {
+                                ...logEntry,
+                                // If the final message is just a status string, keep previous output if it had any
+                                // but for our CLI commands, we usually want the final status to be visible
+                                output: existing.output + "\n" + logEntry.output
+                            };
+                        }
                         return newLogs;
                     }
+
                     return [logEntry, ...prev.slice(0, 99)];
                 });
 
                 if (!logEntry.isPartial) {
-                    toastManager.add({
-                        title: logEntry.isError ? "Command Failed" : "Command Successful",
-                        description: logEntry.command,
-                        type: logEntry.isError ? "error" : "success"
-                    });
                     // Notify other components that logs or system state might have changed
-                    // We can use a custom event or just let them poll
                     window.dispatchEvent(new CustomEvent('cider:refresh'));
                 }
             } catch (e) {
@@ -83,11 +88,9 @@ export function CommandLogProvider({ children }: { children: ReactNode }) {
     }, [refreshLogs]);
 
     return (
-        <Toast.Provider toastManager={toastManager}>
-            <CommandLogContext.Provider value={{ logs, clearLogs, refreshLogs }}>
-                {children}
-            </CommandLogContext.Provider>
-        </Toast.Provider>
+        <CommandLogContext.Provider value={{ logs, clearLogs, refreshLogs }}>
+            {children}
+        </CommandLogContext.Provider>
     );
 }
 
@@ -98,5 +101,3 @@ export function useCommandLog() {
     }
     return context;
 }
-
-export { toastManager };
