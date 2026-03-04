@@ -3,11 +3,11 @@ import {
     Database,
     Plus,
     HardDrive,
-    RefreshCw,
     FileText,
     Image as ImageIcon,
     Cloud,
-    Trash2
+    Trash2,
+    Eye
 } from "lucide-react";
 import {
     listVolumes,
@@ -16,14 +16,16 @@ import {
 } from "../lib/container";
 import type { VolumeInfo } from "../lib/container";
 import { CreateVolumeModal } from "../modals/CreateVolumeModal";
-import { Button, IconButton } from "../components/Button";
+import { BrowseVolumeModal } from "../modals/BrowseVolumeModal";
+import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmDialog } from "../modals/Modal";
 import { useSystem } from "../contexts/SystemContext";
 import { PageMain } from "../components/PageMain";
 import { Tag } from "../components/Tag";
-import { H3, H4, Body, Small, Caption } from "../components/Typography";
+import { H3, H4, Small, Caption } from "../components/Typography";
+import { Input } from "../components/Input";
 
 export default function VolumesPage() {
     const { systemRunning } = useSystem();
@@ -34,6 +36,7 @@ export default function VolumesPage() {
     // Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [confirmDeleteName, setConfirmDeleteName] = useState<string | null>(null);
+    const [browseVolumeName, setBrowseVolumeName] = useState<string | null>(null);
 
     const refreshData = async () => {
         setIsLoading(true);
@@ -57,10 +60,10 @@ export default function VolumesPage() {
         return () => clearInterval(interval);
     }, [systemRunning]);
 
-    const handleCreate = async (name: string) => {
+    const handleCreate = async (name: string, size?: string) => {
         setActionLoading("create");
         try {
-            await createVolume(name);
+            await createVolume(name, size);
             setIsCreateModalOpen(false);
             refreshData();
         } catch (e: any) {
@@ -99,16 +102,16 @@ export default function VolumesPage() {
     };
 
     const totalStorageBytes = useMemo(() => {
-        return volumes.reduce((acc, vol) => acc + (vol.sizeInBytes || 0), 0);
+        return volumes.reduce((acc: number, vol: VolumeInfo) => acc + (vol.sizeInBytes || 0), 0);
     }, [volumes]);
 
     const activeDriversCount = useMemo(() => {
-        const drivers = new Set(volumes.map(v => v.driver));
+        const drivers = new Set(volumes.map((v: VolumeInfo) => v.driver));
         return drivers.size;
     }, [volumes]);
 
     const unusedVolumesCount = useMemo(() => {
-        return volumes.filter(v => (v.sizeInBytes || 0) === 0).length;
+        return volumes.filter((v: VolumeInfo) => (v.sizeInBytes || 0) === 0).length;
     }, [volumes]);
 
     const formatStorageGB = (bytes: number) => {
@@ -120,7 +123,7 @@ export default function VolumesPage() {
             header={
                 <PageHeader
                     title="Volume Management"
-                    description="Persistent storage buckets for stateful container persistence."
+                    description={`${volumes.length} active volumes across ${activeDriversCount} storage drivers`}
                     icon={Database}
                     actions={
                         <Button
@@ -136,48 +139,41 @@ export default function VolumesPage() {
         >
 
             <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <Card className="flex items-center gap-5 p-6 group">
-                        <div className="p-4 bg-primary/10 rounded-2xl text-primary group-hover:scale-110 transition-transform">
-                            <HardDrive size={32} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Total Allocated</Caption>
-                            <div className="flex items-end gap-1.5">
-                                <H4 weight="black" tracking="tight" className="text-3xl leading-none">
-                                    {formatStorageGB(totalStorageBytes)}
-                                </H4>
-                                <Small weight="bold" color="secondary" className="pb-0.5">GB</Small>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card className="flex items-center gap-5 p-6 group">
-                        <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform">
-                            <RefreshCw size={32} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Active Drivers</Caption>
-                            <Body as="span" weight="black" background="primary" className="text-3xl leading-none">
-                                {activeDriversCount}
-                            </Body>
-                        </div>
-                    </Card>
-
-                    <Card className="flex items-center gap-5 p-6 group">
-                        <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform">
-                            <Plus size={32} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <Caption as="p" weight="black" color="secondary" uppercase tracking="widest" className="mb-1">Unused Volumes</Caption>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <Card className="rounded-xl border border-transparent shadow-sm hover:border-primary/40 transition-all">
+                        <Caption weight="black" color="secondary" uppercase tracking="widest" className="mb-2">Total Storage</Caption>
+                        <div className="flex items-end gap-1.5">
                             <H4 weight="black" tracking="tight" className="text-3xl leading-none">
-                                {unusedVolumesCount}
+                                {formatStorageGB(totalStorageBytes)}
                             </H4>
+                            <Small weight="bold" color="secondary" className="pb-0.5">GB</Small>
                         </div>
+                    </Card>
+
+                    <Card className="rounded-xl border border-transparent shadow-sm hover:border-primary/40 transition-all">
+                        <Caption weight="black" color="secondary" uppercase tracking="widest" className="mb-2">Active Drivers</Caption>
+                        <H4 weight="black" tracking="tight" className="text-3xl leading-none">
+                            {activeDriversCount}
+                        </H4>
+                    </Card>
+
+                    <Card className="rounded-xl border border-transparent shadow-sm hover:border-primary/40 transition-all">
+                        <Caption weight="black" color="secondary" uppercase tracking="widest" className="mb-2">Unused Volumes</Caption>
+                        <H4 weight="black" tracking="tight" className="text-3xl leading-none text-amber-500">
+                            {unusedVolumesCount}
+                        </H4>
+                    </Card>
+
+                    <Card className="rounded-xl border border-transparent shadow-sm relative overflow-hidden group hover:border-primary/40 transition-all">
+                        <div className="absolute top-0 right-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors"></div>
+                        <Caption weight="black" color="secondary" uppercase tracking="widest" className="mb-2">Health Status</Caption>
+                        <H4 weight="black" tracking="tight" className="text-3xl leading-none text-emerald-500">
+                            Optimal
+                        </H4>
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {isLoading ? (
                         <div className="col-span-full py-12 text-center text-text-secondary font-display italic animate-pulse">
                             Enumerating logical volumes...
@@ -187,42 +183,79 @@ export default function VolumesPage() {
                             No volumes initialized.
                         </div>
                     ) : (
-                        volumes.map((vol) => (
-                            <Card key={vol.name} className="p-0 overflow-hidden hover:border-primary/40 transition-colors">
-                                <div className="p-6 flex items-start justify-between">
-                                    <div className="flex items-center gap-5">
-                                        <div className="p-3 bg-slate-100 dark:bg-surface-border text-slate-600 dark:text-slate-400 rounded-xl shadow-inner group-hover:text-primary transition-colors">
-                                            {getVolumeIcon(vol)}
-                                        </div>
-                                        <div>
-                                            <H3 weight="bold" className="text-lg group-hover:text-primary transition-colors">
-                                                {vol.name}
-                                            </H3>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <Tag variant="standard" className="uppercase tracking-widest">
-                                                    {vol.driver}
-                                                </Tag>
+                        volumes.map((vol: VolumeInfo) => (
+                            <Card
+                                key={vol.name}
+                                padding="none"
+                                className="flex flex-col overflow-hidden border border-transparent hover:border-primary/40 transition-all group"
+                            >
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                                {getVolumeIcon(vol)}
+                                            </div>
+                                            <div>
+                                                <H3 weight="bold" className="text-lg text-slate-900 dark:text-white tracking-tight">
+                                                    {vol.name}
+                                                </H3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className={`size-1.5 rounded-full ${vol.sizeInBytes > 0 ? 'bg-emerald-500' : 'bg-slate-500'}`}></span>
+                                                    <Caption weight="bold" color="secondary" uppercase tracking="widest" className="text-[10px]">
+                                                        {vol.driver} Driver
+                                                    </Caption>
+                                                </div>
                                             </div>
                                         </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => setBrowseVolumeName(vol.name)}
+                                                className="text-slate-400 hover:text-primary transition-colors p-1"
+                                                title="Browse Volume"
+                                            >
+                                                <Eye size={20} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(vol.name)}
+                                                className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                                                disabled={actionLoading === "delete-" + vol.name}
+                                                title="Delete Volume"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <IconButton
-                                            variant="ghost"
-                                            icon={Trash2}
-                                            size="sm"
-                                            onClick={() => handleDelete(vol.name)}
-                                            loading={actionLoading === "delete-" + vol.name}
-                                        />
+                                    <div className="space-y-4 mb-6">
+                                        <div className="space-y-1">
+                                            <Caption weight="bold" color="secondary" uppercase tracking="widest" className="text-[10px]">
+                                                Mount Point
+                                            </Caption>
+                                            <Input value={vol.source} />
+                                        </div>
+                                        {Object.keys(vol.labels).length > 0 && (
+                                            <div className="space-y-1">
+                                                <Caption weight="bold" color="secondary" uppercase tracking="widest" className="text-[10px]">
+                                                    Labels
+                                                </Caption>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {Object.entries(vol.labels).map(([k, v]) => (
+                                                        <Tag key={k} variant="standard" className="text-[10px]">
+                                                            {k}: {v}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                                <div className="px-6 py-4 bg-slate-50/50 dark:bg-[#181818]/50 flex items-center justify-between border-t border-slate-600 dark:border-surface-border">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                        <Tag variant="success" className="uppercase tracking-widest border-transparent bg-transparent">Read / Write</Tag>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                                            <Database size={18} />
+                                            {formatStorageGB(vol.sizeInBytes || 0)} GB
+                                        </div>
+                                        <Caption weight="bold" color="secondary" className="text-xs italic">
+                                            Format: {vol.format}
+                                        </Caption>
                                     </div>
-                                    <Caption weight="black" color="accent" mono>
-                                        {formatStorageGB(vol.sizeInBytes || 0)} GB
-                                    </Caption>
                                 </div>
                             </Card>
                         ))
@@ -233,8 +266,15 @@ export default function VolumesPage() {
             {isCreateModalOpen && (
                 <CreateVolumeModal
                     onClose={() => setIsCreateModalOpen(false)}
-                    onCreated={(name) => handleCreate(name)}
+                    onCreated={(name, size) => handleCreate(name, size)}
                     isLoading={actionLoading === "create"}
+                />
+            )}
+
+            {browseVolumeName && (
+                <BrowseVolumeModal
+                    volumeName={browseVolumeName}
+                    onClose={() => setBrowseVolumeName(null)}
                 />
             )}
 

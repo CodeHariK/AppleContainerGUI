@@ -20,6 +20,7 @@ interface Props {
 interface PortConfig { host: string; container: string; }
 interface EnvConfig { key: string; value: string; }
 interface VolConfig { host: string; container: string; }
+interface LabelConfig { key: string; value: string; }
 
 export default function CreateContainerModal({ imageName, onClose, onCreate, isCreating }: Props) {
     const [customImage, setCustomImage] = useState("");
@@ -30,6 +31,10 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
     const [ports, setPorts] = useState<PortConfig[]>([]);
     const [env, setEnv] = useState<EnvConfig[]>([]);
     const [volumes, setVolumes] = useState<VolConfig[]>([]);
+    const [containerName, setContainerName] = useState("");
+    const [labels, setLabels] = useState<LabelConfig[]>([]);
+    const [dns, setDns] = useState("");
+    const [dnsDomain, setDnsDomain] = useState("");
     const [runImmediately, setRunImmediately] = useState(true);
     const [networks, setNetworks] = useState<NetworkInfo[]>([]);
 
@@ -48,6 +53,10 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
         ports: ports.filter(p => p.host && p.container).map(p => `${p.host}:${p.container}`),
         env: env.filter(e => e.key && e.value).map(e => `${e.key}=${e.value}`),
         volumes: volumes.filter(v => v.host && v.container).map(v => `${v.host}:${v.container}`),
+        name: containerName || undefined,
+        labels: labels.filter(l => l.key && l.value).map(l => `${l.key}=${l.value}`),
+        dns: dns || undefined,
+        dnsDomain: dnsDomain || undefined,
     };
 
     const currentCommand = runImmediately
@@ -81,6 +90,14 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
         setVolumes(next);
     }
     const removeVol = (idx: number) => setVolumes(volumes.filter((_, i) => i !== idx));
+
+    const addLabel = () => setLabels([...labels, { key: "", value: "" }]);
+    const updateLabel = (idx: number, field: keyof LabelConfig, val: string) => {
+        const next = [...labels];
+        next[idx][field] = val;
+        setLabels(next);
+    }
+    const removeLabel = (idx: number) => setLabels(labels.filter((_, i) => i !== idx));
 
     return (
         <Modal
@@ -128,6 +145,14 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                         containerClassName="mb-4"
                     />
 
+                    <Input
+                        label="Container Name (Optional)"
+                        placeholder="e.g., my-redis-server"
+                        value={containerName}
+                        onChange={e => setContainerName(e.target.value)}
+                        containerClassName="mb-4"
+                    />
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Input
                             label="CPU Cores"
@@ -160,6 +185,21 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                                 placeholder="Select Network"
                             />
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="DNS Nameserver (IP)"
+                            placeholder="e.g., 8.8.8.8"
+                            value={dns}
+                            onChange={e => setDns(e.target.value)}
+                        />
+                        <Input
+                            label="DNS Search Domain"
+                            placeholder="e.g., cider.local"
+                            value={dnsDomain}
+                            onChange={e => setDnsDomain(e.target.value)}
+                        />
                     </div>
                 </section>
 
@@ -253,6 +293,37 @@ export default function CreateContainerModal({ imageName, onClose, onCreate, isC
                     ))}
                     {volumes.length === 0 && (
                         <Text variant="small" color="secondary" className="italic pl-1">No bind mounts configured.</Text>
+                    )}
+                </section>
+
+                {/* Labels */}
+                <section className="mb-6">
+                    <div className="flex justify-between items-center mb-3">
+                        <Heading level={3} weight="semibold" color="primary" className="flex items-center gap-2">
+                            <Plus size={16} /> Labels (--label)
+                        </Heading>
+                        <Button variant="secondary" size="sm" onClick={addLabel} icon={Plus}>
+                            Add Label
+                        </Button>
+                    </div>
+                    {labels.map((l, idx) => (
+                        <div key={idx} className="flex gap-2 items-end mb-3">
+                            <Input
+                                placeholder="KEY"
+                                value={l.key}
+                                onChange={ev => updateLabel(idx, "key", ev.target.value)}
+                            />
+                            <Text color="secondary" className="pb-3 text-slate-400">=</Text>
+                            <Input
+                                placeholder="Value"
+                                value={l.value}
+                                onChange={ev => updateLabel(idx, "value", ev.target.value)}
+                            />
+                            <IconButton variant="danger" size="md" icon={Trash2} onClick={() => removeLabel(idx)} title="Remove Label" className="mb-1" />
+                        </div>
+                    ))}
+                    {labels.length === 0 && (
+                        <Text variant="small" color="secondary" className="italic pl-1">No labels configured.</Text>
                     )}
                 </section>
             </div>

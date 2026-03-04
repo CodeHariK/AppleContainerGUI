@@ -12,6 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"os"
+	"path/filepath"
+
 	"github.com/creack/pty"
 )
 
@@ -190,6 +193,7 @@ func (a *App) logActionExt(exeID string, command string, output string, isError 
 		strings.Contains(command, "inspect") ||
 		strings.Contains(command, "top") ||
 		strings.Contains(command, "stats") ||
+		strings.Contains(command, "system df") ||
 		strings.Contains(command, "ps --all") ||
 		strings.Contains(command, "system status") {
 		if !isError {
@@ -347,6 +351,46 @@ func parseCommand(cmdStr string) []string {
 	return args
 }
 
+
+// detectVolumeLockError checks if the output indicates a Virtualization.framework lock error.
+func detectVolumeLockError(output string) bool {
+	return strings.Contains(output, "VZErrorDomain Code=2") ||
+		strings.Contains(output, "The storage device attachment is invalid")
+}
+
+// recoverVolumeLocks attempts to find and terminate processes locking volumes mentioned in the command.
+func (a *App) recoverVolumeLocks(args []string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+
+	// Pattern for volumes: -v Name:/mnt
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-v") {
+			parts := strings.Split(strings.TrimPrefix(arg, "-v"), ":")
+			if len(parts) > 0 {
+				volumeName := strings.Trim(parts[0], " \"")
+				volumePath := filepath.Join(home, "Library/Application Support/com.apple.container/volumes", volumeName, "volume.img")
+
+				// Check if file exists
+				if _, err := os.Stat(volumePath); err == nil {
+					// Find PIDs using lsof
+					lsofCmd := exec.Command("lsof", "-t", volumePath)
+					pids, err := lsofCmd.Output()
+					if err == nil && len(pids) > 0 {
+						pidList := strings.Fields(string(pids))
+						for _, pid := range pidList {
+							a.logAction("", "Self-Healing", fmt.Sprintf("Terminating process %s locking volume %s", pid, volumeName), true)
+							exec.Command("kill", "-9", pid).Run()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // handleCommand is an HTTP handler to execute CLI commands via POST or DELETE requests.
 func (a *App) handleCommand(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" && r.Method != "DELETE" {
@@ -371,12 +415,25 @@ func (a *App) handleCommand(w http.ResponseWriter, r *http.Request) {
 
 	var output []byte
 	var err error
-	if req.NoTTY {
-		output, err = a.runCli(args[1:]...)
-	} else {
-		// Use the TTY version for user-initiated commands so they stream nicely to xterm
-		output, err = a.runCliTTY(args[1:]...)
+
+	// Retry logic for volume lock recovery
+	for attempt := 1; attempt <= 2; attempt++ {
+		if req.NoTTY {
+			output, err = a.runCli(args[1:]...)
+		} else {
+			output, err = a.runCliTTY(args[1:]...)
+		}
+
+		if err != nil && detectVolumeLockError(string(output)) && attempt == 1 {
+			a.logAction("", "Recovery", "Detected volume lock error, attempting recovery...", true)
+			a.recoverVolumeLocks(args)
+			// Wait a brief moment for locks to clear
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		break
 	}
+
 	if err != nil {
 		http.Error(w, string(output), http.StatusInternalServerError)
 		return

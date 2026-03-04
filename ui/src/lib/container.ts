@@ -39,6 +39,7 @@ export interface ContainerInfo {
 
 export interface ContainerConfig {
     image: string;
+    name?: string;
     command?: string; // override default entrypoint/cmd
     cpus?: number;
     memory?: string;
@@ -46,6 +47,9 @@ export interface ContainerConfig {
     ports?: string[];
     network?: string;
     env?: string[];
+    labels?: string[];
+    dns?: string;
+    dnsDomain?: string;
 }
 
 export interface ImageInfo {
@@ -66,10 +70,14 @@ export interface BuilderStatus {
 }
 
 export interface VolumeInfo {
-    name: string;
     driver: string;
+    options: Record<string, any>;
     source: string;
-    sizeInBytes?: number;
+    name: string;
+    createdAt: number;
+    format: string;
+    labels: Record<string, string>;
+    sizeInBytes: number;
 }
 
 export interface NetworkInfo {
@@ -103,7 +111,76 @@ export interface CommandLog {
     isPartial?: boolean;
 }
 
+export interface SystemDiskUsage {
+    type: string;
+    total: number;
+    active: number;
+    size: string;
+    reclaimable: string;
+}
+
 // --- System ---
+
+export async function getSystemDiskUsage(): Promise<SystemDiskUsage[]> {
+    try {
+        const { output } = await runRawCommand("container system df --format json", { noTty: true });
+        const data = JSON.parse(output);
+
+        const formatBytes = (bytes: number) => {
+            if (bytes === 0) return "0 B";
+            const k = 1024;
+            const sizes = ["B", "KB", "MB", "GB", "TB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+        };
+
+        const result: SystemDiskUsage[] = [];
+
+        if (data.images) {
+            const reclaimPercent = data.images.sizeInBytes > 0
+                ? Math.round((data.images.reclaimable / data.images.sizeInBytes) * 100)
+                : 0;
+            result.push({
+                type: "Images",
+                total: data.images.total,
+                active: data.images.active,
+                size: formatBytes(data.images.sizeInBytes),
+                reclaimable: `${formatBytes(data.images.reclaimable)} (${reclaimPercent}%)`
+            });
+        }
+
+        if (data.containers) {
+            const reclaimPercent = data.containers.sizeInBytes > 0
+                ? Math.round((data.containers.reclaimable / data.containers.sizeInBytes) * 100)
+                : 0;
+            result.push({
+                type: "Containers",
+                total: data.containers.total,
+                active: data.containers.active,
+                size: formatBytes(data.containers.sizeInBytes),
+                reclaimable: `${formatBytes(data.containers.reclaimable)} (${reclaimPercent}%)`
+            });
+        }
+
+        if (data.volumes) {
+            const reclaimPercent = data.volumes.sizeInBytes > 0
+                ? Math.round((data.volumes.reclaimable / data.volumes.sizeInBytes) * 100)
+                : 0;
+            result.push({
+                type: "Local Volumes",
+                total: data.volumes.total,
+                active: data.volumes.active,
+                size: formatBytes(data.volumes.sizeInBytes),
+                reclaimable: `${formatBytes(data.volumes.reclaimable)} (${reclaimPercent}%)`
+            });
+        }
+
+        return result;
+    } catch (error) {
+        console.error("Failed to get disk usage:", error);
+        return [];
+    }
+}
 
 export async function checkSystemStatus(): Promise<boolean> {
     try {
@@ -154,7 +231,7 @@ export async function listContainers(): Promise<ContainerInfo[]> {
             ID: c.configuration?.id || c.ID || c.id || "",
             Image: c.configuration?.image?.reference || c.Image || c.image || "",
             Status: c.status || c.Status || "",
-            State: c.state || (c.status?.toLowerCase().includes("running") ? "running" : "stopped"),
+            State: c.state || (c.status?.toLowerCase().match(/running|up|started|health: healthy/) ? "running" : "stopped"),
             Names: c.Names || c.names || c.configuration?.id || "",
             CreatedAt: c.CreatedAt || c.createdAt || "",
             Ports: c.Ports || c.ports || c.configuration?.publishedPorts || [],
@@ -385,15 +462,42 @@ export async function listVolumes(): Promise<VolumeInfo[]> {
         const { output } = await runRawCommand("container volume ls --format json", { noTty: true });
         const data = JSON.parse(output);
         return Array.isArray(data) ? data : [];
-    } catch {
+    } catch (e) {
+        console.error("Failed to list volumes:", e);
         return [];
     }
 }
 
-export async function createVolume(name: string): Promise<void> {
-    const command = buildVolumeCreateCommand(name);
+export async function createVolume(name: string, size?: string): Promise<void> {
+    const command = buildVolumeCreateCommand(name, size);
     await runRawCommand(command);
 }
+
+export async function runBrowseContainer(volumeName: string): Promise<string> {
+    const name = `browse-${volumeName}-${Date.now().toString().slice(-6)}`.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const command = `container run -d --rm --name ${name} -v ${volumeName}:/mnt alpine tail -f /dev/null`;
+
+    // Explicitly run with noTty in runRawCommand to avoid ANSI pollution in internal logs
+    await runRawCommand(command, { noTty: true });
+
+    // We use the name as the identifier since it's unique and predictable
+    return name;
+}
+
+export async function waitContainerRunning(id: string, maxAttempts = 15): Promise<void> {
+    for (let i = 0; i < maxAttempts; i++) {
+        try {
+            const containers = await listContainers();
+            const c = containers.find(curr => curr.ID.startsWith(id) || curr.Names === id);
+            if (c && c.State === "running") return;
+        } catch (e) {
+            // ignore
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    throw new Error("Timeout waiting for container to start");
+}
+
 
 export async function removeVolume(name: string): Promise<void> {
     await runRawCommand(`container volume rm ${name}`);
@@ -525,11 +629,11 @@ export async function clearSystemProperty(id: string): Promise<void> {
 
 export async function listDnsDomains(): Promise<string[]> {
     try {
-        const res = await fetch(`${API_BASE}/dns`);
-        if (!res.ok) return [];
-        const raw = await res.json();
-        return Array.isArray(raw) ? raw : [];
-    } catch {
+        const { output } = await runRawCommand("container system dns list --format json", { noTty: true });
+        const data = JSON.parse(output);
+        return Array.isArray(data) ? data : [];
+    } catch (e) {
+        console.error("Failed to list DNS domains:", e);
         return [];
     }
 }
@@ -545,8 +649,7 @@ export async function createDnsDomain(domain: string): Promise<void> {
 }
 
 export async function deleteDnsDomain(domain: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/dns/${domain}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text() || "Failed to delete DNS domain");
+    await runRawCommand(`container system dns rm ${domain}`);
 }
 
 // --- Files & Dockerfiles ---

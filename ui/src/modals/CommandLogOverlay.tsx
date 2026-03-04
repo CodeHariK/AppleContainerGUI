@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Modal } from "./Modal";
 import { useCommandLog } from "../contexts/CommandLogContext";
 import { Trash2, Terminal, ChevronRight } from "lucide-react";
@@ -7,14 +7,13 @@ import { IconButton } from "../components/Button";
 import { Text } from "../components/Typography";
 
 export default function CommandLogOverlay() {
-    const { logs, clearLogs } = useCommandLog();
-    const [open, setOpen] = useState(false);
+    const { logs, clearLogs, isOverlayOpen: open, setIsOverlayOpen: setOpen } = useCommandLog();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "`") {
                 e.preventDefault();
-                setOpen((prev: boolean) => !prev);
+                setOpen(!open);
             }
             if (e.key === "Escape" && open) {
                 setOpen(false);
@@ -22,7 +21,7 @@ export default function CommandLogOverlay() {
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [open]);
+    }, [open, setOpen]);
 
     return (
         <Modal

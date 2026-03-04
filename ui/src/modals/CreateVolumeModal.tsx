@@ -7,16 +7,17 @@ import "../Dashboard.css";
 
 interface Props {
     onClose: () => void;
-    onCreated: (name: string) => void;
+    onCreated: (name: string, size?: string) => void;
     isLoading: boolean;
 }
 
 export function CreateVolumeModal({ onClose, onCreated, isLoading }: Props) {
     const [name, setName] = useState("");
+    const [size, setSize] = useState("512");
 
     const handleCreate = () => {
         if (!name.trim()) return;
-        onCreated(name.trim());
+        onCreated(name.trim(), size);
     };
 
     return (
@@ -25,15 +26,23 @@ export function CreateVolumeModal({ onClose, onCreated, isLoading }: Props) {
             onOpenChange={(open) => !open && onClose()}
             title="Create New Volume"
         >
-            <div className="mb-6">
+            <div className="space-y-4 mb-6">
                 <Input
-                    label="Volume Name (Optional)"
+                    label="Volume Name"
                     icon={HardDrive}
                     placeholder="e.g., redis-data"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleCreate()}
                     autoFocus
+                />
+                <Input
+                    label="Size (MB)"
+                    type="number"
+                    placeholder="512"
+                    value={size}
+                    onChange={e => setSize(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
                 />
             </div>
 

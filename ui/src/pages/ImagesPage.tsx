@@ -711,7 +711,7 @@ function ComposeProjectsList({ query, rootDir }: { query: string; rootDir: strin
             <DnsSetupModal
                 open={showSudoModal}
                 onOpenChange={setShowSudoModal}
-                projectName={projectName}
+                targetName={projectName}
             />
 
             <ConfirmDialog

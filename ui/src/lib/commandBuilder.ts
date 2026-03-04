@@ -40,10 +40,25 @@ export function buildRunCommand(config: ContainerConfig): string {
         });
     }
 
-    // Name (if available in config, though currently not explicitly in the state)
-    // if (config.name) {
-    //     parts.push("--name", config.name);
-    // }
+    // Name
+    if (config.name) {
+        parts.push("--name", config.name);
+    }
+
+    // Labels
+    if (config.labels && config.labels.length > 0) {
+        config.labels.forEach(l => {
+            if (l) parts.push("--label", `"${l}"`);
+        });
+    }
+
+    // DNS
+    if (config.dns) {
+        parts.push("--dns", config.dns);
+    }
+    if (config.dnsDomain) {
+        parts.push("--dns-domain", config.dnsDomain);
+    }
 
     // Image
     parts.push(config.image);
@@ -95,6 +110,26 @@ export function buildCreateCommand(config: ContainerConfig): string {
         });
     }
 
+    // Name
+    if (config.name) {
+        parts.push("--name", config.name);
+    }
+
+    // Labels
+    if (config.labels && config.labels.length > 0) {
+        config.labels.forEach(l => {
+            if (l) parts.push("--label", `"${l}"`);
+        });
+    }
+
+    // DNS
+    if (config.dns) {
+        parts.push("--dns", config.dns);
+    }
+    if (config.dnsDomain) {
+        parts.push("--dns-domain", config.dnsDomain);
+    }
+
     // Image
     parts.push(config.image);
 
@@ -126,8 +161,15 @@ export function buildTagImageCommand(name: string, tag: string): string {
     return `container image tag "${name}" "${tag}"`;
 }
 
-export function buildVolumeCreateCommand(name: string): string {
-    return `container volume create ${name}`;
+export function buildVolumeCreateCommand(name: string, size?: string): string {
+    const parts = ["container", "volume", "create"];
+    if (size) {
+        // If it's a number, assume MB and add 'M' suffix
+        const sizeParam = /^\d+$/.test(size) ? `${size}M` : size;
+        parts.push("-s", sizeParam);
+    }
+    parts.push(name);
+    return parts.join(" ");
 }
 
 export function buildNetworkCreateCommand(name: string, driver?: string): string {

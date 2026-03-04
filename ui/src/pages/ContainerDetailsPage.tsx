@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
     Terminal,
@@ -24,15 +24,20 @@ import {
     Network,
     HardDrive,
     Tag as TagIcon,
-    Box
+    Box,
+    Trash2
 } from "lucide-react";
 import TerminalComponent from "../modals/TerminalComponent";
+import DnsSetupModal from "../modals/DnsSetupModal";
 import {
     execContainer,
     listContainers,
     getContainerLogs,
     stopContainer,
     restartContainer,
+    removeContainer,
+    listDnsDomains,
+    listSystemProperties,
     API_BASE
 } from "../lib/container";
 import type { ContainerInfo } from "../lib/container";
@@ -57,6 +62,28 @@ export default function ContainerDetailsPage() {
     const [containerInfo, setContainerInfo] = useState<ContainerInfo | null>(null);
     const { systemRunning } = useSystem();
 
+    // DNS state
+    const [dnsDomains, setDnsDomains] = useState<string[]>([]);
+    const [systemDomain, setSystemDomain] = useState<string>("");
+    const [showDnsModal, setShowDnsModal] = useState(false);
+
+    const fetchDnsInfo = useCallback(async () => {
+        if (!systemRunning) return;
+        try {
+            const [domains, props] = await Promise.all([
+                listDnsDomains(),
+                listSystemProperties()
+            ]);
+            setDnsDomains(domains);
+            const domainProp = props.find(p => p.ID === "dns.domain");
+            if (domainProp) {
+                setSystemDomain(domainProp.Value);
+            }
+        } catch (e) {
+            console.error("Failed to fetch DNS info", e);
+        }
+    }, [systemRunning]);
+
     // Tabs: 'overview', 'logs', 'files'
     const [activeTab, setActiveTab] = useState<"overview" | "logs" | "files">("overview");
 
@@ -77,7 +104,7 @@ export default function ContainerDetailsPage() {
 
     // Actions State
     const [isActionPending, setIsActionPending] = useState(false);
-    const [pendingAction, setPendingAction] = useState<"restart" | "stop" | null>(null);
+    const [pendingAction, setPendingAction] = useState<"restart" | "stop" | "delete" | null>(null);
 
     const handleRestart = async () => {
         if (!id) return;
@@ -103,6 +130,25 @@ export default function ContainerDetailsPage() {
             setTimeout(() => window.location.reload(), 1000);
         } catch (e) {
             console.error("Failed to stop", e);
+        } finally {
+            setIsActionPending(false);
+            setPendingAction(null);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("Are you sure you want to permanently delete this container?")) return;
+
+        setIsActionPending(true);
+        setPendingAction("delete");
+        try {
+            await removeContainer(id);
+            // Redirect to dashboard on success
+            window.location.href = "/";
+        } catch (e) {
+            console.error("Failed to delete", e);
+            alert("Failed to delete container. Make sure it is stopped first.");
         } finally {
             setIsActionPending(false);
             setPendingAction(null);
@@ -142,6 +188,10 @@ export default function ContainerDetailsPage() {
             loadFiles(currentPath);
         }
     }, [activeTab, currentPath, isRunning]);
+
+    useEffect(() => {
+        fetchDnsInfo();
+    }, [fetchDnsInfo]);
 
     useEffect(() => {
         if (activeTab !== "logs" || !id) return;
@@ -301,6 +351,15 @@ export default function ContainerDetailsPage() {
                             >
                                 Stop
                             </Button>
+                            <Button
+                                variant="danger"
+                                onClick={handleDelete}
+                                disabled={isActionPending}
+                                loading={isActionPending && pendingAction === 'delete'}
+                                icon={Trash2}
+                            >
+                                Delete
+                            </Button>
                         </div>
                     }
                 />
@@ -354,7 +413,13 @@ export default function ContainerDetailsPage() {
                     <>
                         {/* Overview Tab Content */}
                         {activeTab === "overview" && containerInfo && (
-                            <OverviewTab containerInfo={containerInfo} containerName={containerName} />
+                            <OverviewTab
+                                containerInfo={containerInfo}
+                                containerName={containerName}
+                                dnsDomains={dnsDomains}
+                                systemDomain={systemDomain}
+                                onSetupDns={() => setShowDnsModal(true)}
+                            />
                         )}
 
                         {/* Logs Tab Content */}
@@ -382,13 +447,35 @@ export default function ContainerDetailsPage() {
                     </>
                 )}
             </div>
+
+            <DnsSetupModal
+                open={showDnsModal}
+                onOpenChange={(open) => {
+                    setShowDnsModal(open);
+                    if (!open) fetchDnsInfo();
+                }}
+                targetName={containerName}
+                type="container"
+            />
         </PageMain>
     );
 }
 
 // --- Extracted Components ---
 
-function OverviewTab({ containerInfo, containerName }: { containerInfo: ContainerInfo, containerName: string }) {
+function OverviewTab({
+    containerInfo,
+    containerName,
+    dnsDomains,
+    systemDomain,
+    onSetupDns
+}: {
+    containerInfo: ContainerInfo,
+    containerName: string,
+    dnsDomains: string[],
+    systemDomain: string,
+    onSetupDns: () => void
+}) {
     return (
         <div className="p-6 bg-[var(--bg-primary)]">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -530,6 +617,71 @@ function OverviewTab({ containerInfo, containerName }: { containerInfo: Containe
                                         </Tbody>
                                     </Table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* DNS & Connectivity */}
+                <Card className="overflow-hidden lg:col-span-2">
+                    <SectionHeader title="DNS & Connectivity" icon={Server} />
+                    <div className="p-5">
+                        <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+                            <div className="flex-1">
+                                <H4 variant="xs" color="secondary" uppercase className="mb-3">Local DNS Status</H4>
+                                {dnsDomains.includes(containerName) || (dnsDomains.length > 0 && systemDomain) ? (
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                            <Body weight="bold" color="primary">Active & Configured</Body>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <Caption color="secondary" uppercase tracking="widest" className="text-[10px]">Primary Connection URL</Caption>
+                                            <div className="flex items-center gap-2">
+                                                <Code variant="body" color="accent" className="px-3 py-2 bg-[var(--accent-primary)]/5 rounded-lg border border-[var(--accent-primary)]/10 text-base">
+                                                    {(() => {
+                                                        const matchedDomain = dnsDomains.find(d => d.startsWith(containerName)) || dnsDomains[0] || (systemDomain ? `${containerName}.${systemDomain}` : `${containerName}.local`);
+                                                        const primaryPort = containerInfo?.Ports?.find((p: any) => p.hostPort === 80 || p.hostPort === 443 || p.hostPort === 8080)?.hostPort || containerInfo?.Ports?.[0]?.hostPort;
+                                                        const portSuffix = primaryPort && primaryPort !== 80 && primaryPort !== 443 ? `:${primaryPort}` : "";
+                                                        return `http://${matchedDomain}${portSuffix}`;
+                                                    })()}
+                                                </Code>
+                                                <IconButton
+                                                    icon={Copy}
+                                                    variant="glass"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const matchedDomain = dnsDomains.find(d => d.startsWith(containerName)) || dnsDomains[0] || (systemDomain ? `${containerName}.${systemDomain}` : `${containerName}.local`);
+                                                        const primaryPort = containerInfo?.Ports?.find((p: any) => p.hostPort === 80 || p.hostPort === 443 || p.hostPort === 8080)?.hostPort || containerInfo?.Ports?.[0]?.hostPort;
+                                                        const portSuffix = primaryPort && primaryPort !== 80 && primaryPort !== 443 ? `:${primaryPort}` : "";
+                                                        const url = `http://${matchedDomain}${portSuffix}`;
+                                                        navigator.clipboard.writeText(url);
+                                                    }}
+                                                    title="Copy URL"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-2 rounded-full bg-slate-500"></div>
+                                            <Body color="secondary">Not Configured</Body>
+                                        </div>
+                                        <P color="secondary" className="text-xs leading-relaxed opacity-70">
+                                            Ready to enable local access. Create a DNS mapping to connect via <code className="text-[var(--accent-primary)]">{containerName}.local</code> instead of IP addresses.
+                                        </P>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="shrink-0">
+                                <Button
+                                    variant="secondary"
+                                    onClick={onSetupDns}
+                                    icon={Plus}
+                                >
+                                    {dnsDomains.includes(containerName) ? "Manage DNS" : "Setup Local DNS"}
+                                </Button>
                             </div>
                         </div>
                     </div>

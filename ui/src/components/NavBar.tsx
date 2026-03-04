@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { IconButton } from "./Button";
 import { Play, StopCircle, Settings } from "lucide-react";
 import { useSystem } from "../contexts/SystemContext";
-import { H2, Small } from "./Typography";
+import { H4, Small } from "./Typography";
 
 export function NavBar() {
     const { systemRunning, start, stop } = useSystem();
@@ -52,7 +52,7 @@ export function NavBar() {
                         <span className="material-symbols-outlined text-3xl transition-transform group-hover:scale-110">deployed_code</span>
                     </div>
 
-                    <H2 weight="semibold" className="text-lg leading-tight tracking-[-0.015em] hidden sm:block">Apple Cider</H2>
+                    <H4 weight="semibold" className="text-lg leading-tight tracking-[-0.015em] hidden sm:block">Apple Cider</H4>
                 </Link>
 
                 {systemRunning ? (

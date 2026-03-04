@@ -7,12 +7,15 @@ interface CommandLogContextType {
     logs: CommandLog[];
     clearLogs: () => Promise<void>;
     refreshLogs: () => Promise<void>;
+    isOverlayOpen: boolean;
+    setIsOverlayOpen: (open: boolean) => void;
 }
 
 const CommandLogContext = createContext<CommandLogContextType | undefined>(undefined);
 
 export function CommandLogProvider({ children }: { children: ReactNode }) {
     const [logs, setLogs] = useState<CommandLog[]>([]);
+    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
 
     const refreshLogs = useCallback(async () => {
         try {
@@ -88,7 +91,7 @@ export function CommandLogProvider({ children }: { children: ReactNode }) {
     }, [refreshLogs]);
 
     return (
-        <CommandLogContext.Provider value={{ logs, clearLogs, refreshLogs }}>
+        <CommandLogContext.Provider value={{ logs, clearLogs, refreshLogs, isOverlayOpen, setIsOverlayOpen }}>
             {children}
         </CommandLogContext.Provider>
     );

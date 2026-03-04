@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import type { ContainerInfo } from "../lib/container";
 import {
     listContainers,
     startContainer,
     stopContainer,
     removeContainer,
-    getContainerStats
+    getContainerStats,
+    getSystemDiskUsage,
+    type SystemDiskUsage,
+    type ContainerInfo
 } from "../lib/container";
 import { ConfirmDialog } from "../modals/Modal";
 
@@ -47,6 +49,7 @@ function DashboardContent() {
     const { systemRunning } = useSystem();
     const [containers, setContainers] = useState<ContainerInfo[]>([]);
     const [stats, setStats] = useState<Record<string, any>>({});
+    const [diskUsage, setDiskUsage] = useState<SystemDiskUsage[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -56,11 +59,13 @@ function DashboardContent() {
     const refreshData = async () => {
         try {
             if (systemRunning) {
-                const [cList, sList] = await Promise.all([
+                const [cList, sList, dUsage] = await Promise.all([
                     listContainers(),
-                    getContainerStats()
+                    getContainerStats(),
+                    getSystemDiskUsage()
                 ]);
                 setContainers(cList);
+                setDiskUsage(dUsage);
 
                 const sMap: Record<string, any> = {};
                 if (sList && Array.isArray(sList)) {
@@ -190,6 +195,37 @@ function DashboardContent() {
                 </div>
             </div>
 
+            {diskUsage.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {diskUsage.map((item, idx) => (
+                        <Card key={idx} padding="sm" className="relative overflow-hidden group">
+                            <div className="flex justify-between items-start mb-1">
+                                <Caption color="secondary" weight="bold" className="uppercase tracking-wider">
+                                    {item.type}
+                                </Caption>
+                                <Tag variant={item.active > 0 ? "success" : "standard"}>
+                                    {item.active}/{item.total} Active
+                                </Tag>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <Body weight="bold">{item.size}</Body>
+                                <Caption color="muted">Total</Caption>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <Caption color={item.reclaimable.includes("(0%)") ? "secondary" : "accent"} weight="medium">
+                                        {item.reclaimable}
+                                    </Caption>
+                                </div>
+                                <div className="h-6 w-12 rounded bg-surface-border/30 flex items-center justify-center">
+                                    <Box size={14} className="text-text-secondary opacity-30" />
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
             <Card padding="none">
                 <Table>
                     <Thead>
@@ -234,10 +270,9 @@ function DashboardContent() {
                                     <Tr key={container.ID}>
                                         <Td className="whitespace-nowrap">
                                             <div className="relative flex items-center justify-center">
-                                                <div className={`h - 3 w - 3 rounded - full ${container.State === "running" ? "bg-green-500 status-pulse-green" :
-                                                    (container.State === "exited" || container.State === "stopped") ? "bg-slate-500" :
-                                                        "bg-red-500 status-pulse-red"
-                                                    } `}></div>
+                                                <div className={`h-3 w-3 rounded-full ${container.State === "running" ? "bg-green-500 status-pulse-green" :
+                                                    "bg-red-500 status-pulse-red"
+                                                    }`}></div>
                                             </div>
                                         </Td>
                                         <Td>
@@ -283,7 +318,7 @@ function DashboardContent() {
                                                         </Caption>
                                                     </div>
                                                     <div className="h-1.5 w-full bg-slate-200 dark:bg-surface-border rounded-full overflow-hidden">
-                                                        <div className={`h - full rounded - full transition - all duration - 500 ${cpuUsage > 80 ? "bg-red-500" : cpuUsage > 50 ? "bg-orange-400" : "bg-green-500"} `} style={{ width: `${cpuUsage}% ` }}></div>
+                                                        <div className={`h-full rounded-full transition-all duration-500 ${cpuUsage > 80 ? "bg-red-500" : cpuUsage > 50 ? "bg-orange-400" : "bg-green-500"}`} style={{ width: `${cpuUsage}%` }}></div>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -298,7 +333,7 @@ function DashboardContent() {
                                                         <Caption weight="medium" color="primary">{memPercent}%</Caption>
                                                     </div>
                                                     <div className="h-1.5 w-full bg-slate-200 dark:bg-surface-border rounded-full overflow-hidden">
-                                                        <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${memPercent}% ` }}></div>
+                                                        <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${memPercent}%` }}></div>
                                                     </div>
                                                 </div>
                                             ) : (
